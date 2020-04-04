@@ -71,7 +71,7 @@ const generateRefreshToken = async (user) => {
             creationDate: new Date(),
             user: user._id
         });
-        await refreshToken.save();
+        refreshToken.save();
         return token;
     }
 };

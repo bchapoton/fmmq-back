@@ -72,16 +72,16 @@ router.post('/sign-up', async function (req, res, next) {
 /**
  * Refresh token
  */
-router.post('/refresh', function (req, res, next) {
+router.post('/refresh', async function (req, res, next) {
     if (req.body.refreshToken && req.body.token) {
         try {
             let decoded = AuthService.decodeToken(req.body.token);
             decoded = AuthService.decodeToken(req.body.token);
-            const user = User.findOne({email: decoded.email});
+            const user = await User.findOne({email: decoded.email});
             if (!user) {
                 throw 'Access Denied'
             }
-            const refreshTokenEntity = RefreshToken.findOne({refreshToken: req.body.refreshToken, user: user._id});
+            const refreshTokenEntity = await RefreshToken.findOne({refreshToken: req.body.refreshToken, user: user._id});
             if (!refreshTokenEntity) {
                 throw 'Access Denied'
             }
