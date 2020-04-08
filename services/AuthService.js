@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
-const config = require('config');
 const crypto = require('crypto');
+const {getPrivateKey} = require("./SystemService");
 const {RefreshToken} = require("../models/refreshToken.model");
 
 const generateJWT = (user) => {
@@ -51,10 +51,6 @@ const decodeToken = (token) => {
   return jwt.decode(token, getPrivateKey());
 };
 
-const getPrivateKey = () => {
-    return config.get('FMMQ-private-key');
-};
-
 /**
  * Token validity in second
  */
@@ -87,5 +83,4 @@ function getCurrentTime() {
 exports.generateJWT = generateJWT;
 exports.checkTokenValidity = checkTokenValidity;
 exports.decodeToken = decodeToken;
-exports.getPrivateKey = getPrivateKey;
 exports.generateRefreshToken = generateRefreshToken;

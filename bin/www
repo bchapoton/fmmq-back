@@ -8,8 +8,8 @@ const app = require('../app');
 const debug = require('debug')('quiz:server');
 const http = require('http');
 const mongoose = require('mongoose');
+const {getNodePort, getMongoDBUri, getPrivateKey} = require("../services/SystemService");
 const {initServerData} = require("../services/InitService");
-const {getPrivateKey} = require("../services/AuthService");
 
 
 if (!getPrivateKey()) {
@@ -17,12 +17,21 @@ if (!getPrivateKey()) {
   process.exit(1);
 }
 
+const mongoDBUri = getMongoDBUri();
+if(!mongoDBUri) {
+  console.error("FATAL ERROR: MongoDb uri is not defined.");
+  process.exit(1);
+}
+
 // mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=false
 mongoose
-    .connect("mongodb://localhost:27017/fmmq",
+    .connect(mongoDBUri,
         { useUnifiedTopology: true, useNewUrlParser: true })
     .then(() => console.log("Connected to MongoDB..."))
-    .catch(err => console.error("Could not connect to MongoDB..."));
+    .catch(err => {
+      console.error("FATAL ERROR: Could not connect to MongoDB...");
+      process.exit(1);
+    });
 
 // initialize FMMQ server
 initServerData();
@@ -31,7 +40,7 @@ initServerData();
  * Get port from environment and store in Express.
  */
 
-const port = normalizePort(process.env.PORT || '8080');
+const port = normalizePort(getNodePort());
 app.set('port', port);
 
 /**
