@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const {RefreshToken} = require("../models/refreshToken.model");
 
 const generateJWT = (user) => {
-    const tokenDate = new Date().getTime();
+    const tokenDate = getCurrentTime();
     return generateJWTFromPayload({
         _id: user._id,
         email: user.email,
@@ -20,7 +20,7 @@ const generateJWTFromPayload = (payload) => {
         getPrivateKey()); //get the private key from the config file -> environment variable
 };
 
-const checkTokenValidity = (token, res) => {
+const checkTokenValidity = (token, req, res) => {
     if(!token) {
         res.status(401).send({message: 'Access Denied'});
         return false;
@@ -29,10 +29,14 @@ const checkTokenValidity = (token, res) => {
     try {
         //if can verify the token, set req.user and pass to next middleware
         const decoded = decodeToken(token);
-        const tokenExpirationTimestamp = decoded.iat + getTokenValidity();
-        if(decoded.tokenDate && tokenExpirationTimestamp > (new Date().getTime() / 1000)) {
-            const refreshedToken = Object.assign(decoded, {tokenDate: new Date()});
-            res.header('x-token', generateJWTFromPayload(refreshedToken));
+        const currentTime = getCurrentTime();
+        if(decoded.expire > currentTime) {
+            const refreshedToken = Object.assign(decoded, {
+                tokenDate: currentTime,
+                expire: getTWTExpireInMilliseconds(currentTime)
+            });
+            res.set('x-token', generateJWTFromPayload(refreshedToken));
+            req.userContext = decoded;
             return true;
         }
         res.stat(400).send({message: 'token expired'});
@@ -68,13 +72,17 @@ const generateRefreshToken = async (user) => {
         const token = randomBytes.toString('hex');
         const refreshToken = new RefreshToken({
             refreshToken: token,
-            creationDate: new Date(),
+            creationDate: getCurrentTime(),
             user: user._id
         });
         refreshToken.save();
         return token;
     }
 };
+
+function getCurrentTime() {
+    return (new Date()).getTime();
+}
 
 exports.generateJWT = generateJWT;
 exports.checkTokenValidity = checkTokenValidity;

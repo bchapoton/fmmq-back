@@ -24,8 +24,7 @@ app.use(cors());
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-app.use('/categories', authMiddleware, categoriesRouter);
-app.use('/play', gamesRouter);
+app.use('/rooms', authMiddleware, gamesRouter);
 app.use('/auth', authenticationRouter);
 
 module.exports = app;

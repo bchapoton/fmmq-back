@@ -76,7 +76,6 @@ router.post('/refresh', async function (req, res, next) {
     if (req.body.refreshToken && req.body.token) {
         try {
             let decoded = AuthService.decodeToken(req.body.token);
-            decoded = AuthService.decodeToken(req.body.token);
             const user = await User.findOne({email: decoded.email});
             if (!user) {
                 throw 'Access Denied'
@@ -86,7 +85,7 @@ router.post('/refresh', async function (req, res, next) {
                 throw 'Access Denied'
             }
             refreshTokenEntity.delete();
-            const newRefreshToken = AuthService.generateRefreshToken(user);
+            const newRefreshToken = await AuthService.generateRefreshToken(user);
             const newToken = AuthService.generateJWT(user);
             res.send({token: newToken, refreshToken: newRefreshToken});
             return;
