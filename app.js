@@ -4,10 +4,10 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const authMiddleware = require('./middleware/Auth');
 const cors = require('cors');
+const {isDebug} = require("./services/SystemService");
+const debug = require('debug')('quiz:server');
 
-const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
-const categoriesRouter = require('./routes/categories');
 const gamesRouter = require('./routes/games');
 const authenticationRouter = require('./routes/Authentication')
 
@@ -22,7 +22,12 @@ const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 app.use(cors());
 
-app.use('/', indexRouter);
+if(isDebug()) {
+    debug('Server started in DEBUG MODE');
+    const debugRouter = require('./routes/debug');
+    app.use('/debug', debugRouter);
+}
+
 app.use('/users', usersRouter);
 app.use('/rooms', authMiddleware, gamesRouter);
 app.use('/auth', authenticationRouter);

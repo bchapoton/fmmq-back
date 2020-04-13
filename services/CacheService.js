@@ -17,6 +17,13 @@ class CacheService {
         return this.cache.get(key);
     }
 
+    findRoom(key) {
+        if(key && key.startsWith('/')) {
+            return this.cache.get(key.substring(1));
+        }
+        return this.get(key);
+    }
+
     delete(key) {
         this.cache.del(key);
     }

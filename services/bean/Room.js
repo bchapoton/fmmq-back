@@ -1,3 +1,6 @@
+const crypto = require('crypto');
+const {generateCipherKeys} = require("../CipherUtils");
+
 /**
  * Room handle players array, all operation on the array will be made by splice function,
  * because we use a mutable array stored in memory cache
@@ -39,17 +42,40 @@ class Room {
         return leaderBoard;
     }
 
+    /**
+     * Join the player to the room
+     *
+     * @param object user the player
+     * @return string The player token
+     */
     joinRoom(user) {
         const index = playerFinder(this.players, user);
         if (index === -1) {
+            const playerCipher = generateCipherKeys();
+            const playerToken = crypto.createHash('md5').update(playerCipher.key).digest("hex");
             this.players.push({
                 id: user.id,
+                playerToken: playerToken,
+                playerCipher: playerCipher,
                 nickname: user.nickname,
                 score: 0,
                 previousMusicIndexFound: -1, // the previous index found, useful to handle combo point when previous music was found
                 currentMusicValues: {artist: [], title: []} // hold the splitted array of the artist and the music searched
             });
+            return playerToken;
+        } else {
+            return this.players[index].playerToken;
         }
+    }
+
+    isPlayerAuthenticated(playerId, playerToken) {
+        const index = playerFinderById(this.players, playerId);
+        if(index !== -1) {
+            if(this.players[index].playerToken === playerToken) {
+                return this.players[index];
+            }
+        }
+        return null;
     }
 
     quit(player) {
@@ -113,7 +139,11 @@ class Room {
 }
 
 const playerFinder = (array, searched) => {
-    return array.findIndex(item => item.id === searched.id);
+    return playerFinderById(array,searched.id);
+};
+
+const playerFinderById = (array, searchedId) => {
+    return array.findIndex(item => item.id === searchedId);
 };
 
 const splitCurrentMusicScheme = (currentMusicScheme) => {

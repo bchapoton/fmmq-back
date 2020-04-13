@@ -15,6 +15,11 @@ const getPrivateKey = () => {
     return process.env.FMMQ_private_key;
 };
 
+const isDebug = () => {
+    return process.env.FMMQ_DEBUG_MODE === 'true' ? process.env.FMMQ_DEBUG_MODE : false ;
+};
+
 exports.getMongoDBUri = getMongoDBUri;
 exports.getNodePort = getNodePort;
 exports.getPrivateKey = getPrivateKey;
+exports.isDebug = isDebug;

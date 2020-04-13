@@ -10,27 +10,28 @@ const http = require('http');
 const mongoose = require('mongoose');
 const {getNodePort, getMongoDBUri, getPrivateKey} = require("../services/SystemService");
 const {initServerData} = require("../services/InitService");
+const SocketIO = require('socket.io');
 
 
 if (!getPrivateKey()) {
-  console.error("FATAL ERROR: private key is not defined.");
-  process.exit(1);
+    console.error("FATAL ERROR: private key is not defined.");
+    process.exit(1);
 }
 
 const mongoDBUri = getMongoDBUri();
-if(!mongoDBUri) {
-  console.error("FATAL ERROR: MongoDb uri is not defined.");
-  process.exit(1);
+if (!mongoDBUri) {
+    console.error("FATAL ERROR: MongoDb uri is not defined.");
+    process.exit(1);
 }
 
 // mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=false
 mongoose
     .connect(mongoDBUri,
-        { useUnifiedTopology: true, useNewUrlParser: true })
+        {useUnifiedTopology: true, useNewUrlParser: true})
     .then(() => console.log("Connected to MongoDB..."))
     .catch(err => {
-      console.error("FATAL ERROR: Could not connect to MongoDB...");
-      process.exit(1);
+        console.error("FATAL ERROR: Could not connect to MongoDB...");
+        process.exit(1);
     });
 
 // initialize FMMQ server
@@ -58,23 +59,31 @@ server.on('error', onError);
 server.on('listening', onListening);
 
 /**
+ * Attach socket
+ */
+const socket = require('../socket/FMMQSocket');
+socket.attach(server, {
+    transports: ['websocket']
+});
+
+/**
  * Normalize a port into a number, string, or false.
  */
 
 function normalizePort(val) {
-  const port = parseInt(val, 10);
+    const port = parseInt(val, 10);
 
-  if (isNaN(port)) {
-    // named pipe
-    return val;
-  }
+    if (isNaN(port)) {
+        // named pipe
+        return val;
+    }
 
-  if (port >= 0) {
-    // port number
-    return port;
-  }
+    if (port >= 0) {
+        // port number
+        return port;
+    }
 
-  return false;
+    return false;
 }
 
 /**
@@ -82,27 +91,27 @@ function normalizePort(val) {
  */
 
 function onError(error) {
-  if (error.syscall !== 'listen') {
-    throw error;
-  }
+    if (error.syscall !== 'listen') {
+        throw error;
+    }
 
-  const bind = typeof port === 'string'
-    ? 'Pipe ' + port
-    : 'Port ' + port;
+    const bind = typeof port === 'string'
+        ? 'Pipe ' + port
+        : 'Port ' + port;
 
-  // handle specific listen errors with friendly messages
-  switch (error.code) {
-    case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
-      process.exit(1);
-      break;
-    case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
-      process.exit(1);
-      break;
-    default:
-      throw error;
-  }
+    // handle specific listen errors with friendly messages
+    switch (error.code) {
+        case 'EACCES':
+            console.error(bind + ' requires elevated privileges');
+            process.exit(1);
+            break;
+        case 'EADDRINUSE':
+            console.error(bind + ' is already in use');
+            process.exit(1);
+            break;
+        default:
+            throw error;
+    }
 }
 
 /**
@@ -110,9 +119,9 @@ function onError(error) {
  */
 
 function onListening() {
-  const addr = server.address();
-  const bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
-  debug('Listening on ' + bind);
+    const addr = server.address();
+    const bind = typeof addr === 'string'
+        ? 'pipe ' + addr
+        : 'port ' + addr.port;
+    debug('Listening on ' + bind);
 }
