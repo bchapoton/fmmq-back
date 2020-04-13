@@ -41,7 +41,8 @@ const enterRoom = async (categoryId, player) => {
         musicsLength: game.getMusicSchemeLength(),
         leaderBoard: game.getLeaderBoard(),
         socketNamespace: categoryId,
-        playerToken: playerToken
+        playerToken: playerToken,
+        playerId: player.id
     }
 };
 
