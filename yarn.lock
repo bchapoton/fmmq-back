@@ -225,6 +225,10 @@ cors@^2.8.5:
     object-assign "^4"
     vary "^1"
 
+damerau-levenshtein-js@^1.1.5:
+  version "1.1.5"
+  resolved "https://registry.yarnpkg.com/damerau-levenshtein-js/-/damerau-levenshtein-js-1.1.5.tgz#b7215555cbce83d8e667283c13395a6f9af24b22"
+
 debug@2.6.9, debug@~2.6.9:
   version "2.6.9"
   resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.9.tgz#5d128515df134ff327e90a4c93f4e077a536341f"
@@ -931,6 +935,10 @@ readable-stream@^2.0.6, readable-stream@^2.3.5:
 regexp-clone@1.0.0, regexp-clone@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/regexp-clone/-/regexp-clone-1.0.0.tgz#222db967623277056260b992626354a04ce9bf63"
+
+remove-accents@^0.4.2:
+  version "0.4.2"
+  resolved "https://registry.yarnpkg.com/remove-accents/-/remove-accents-0.4.2.tgz#0a43d3aaae1e80db919e07ae254b285d9e1c7bb5"
 
 require_optional@^1.0.1:
   version "1.0.1"
