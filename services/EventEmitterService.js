@@ -19,14 +19,16 @@ const emitOnFailed = (categoryId, player, accuracy) => {
  * @param found string
  * @param alreadyFound string
  * @param trophy int
+ * @param music object the found values (artist, title or both)
  */
-const emitOnGuessed = (categoryId, player, points, found, alreadyFound, trophy) => {
+const emitOnGuessed = (categoryId, player, points, found, alreadyFound, trophy, music) => {
     const payload = {
         playerId: player.id,
         points: points,
         found: found,
         alreadyFound: alreadyFound,
-        trophy: trophy
+        trophy: trophy,
+        music: music
     };
 
     if (trophy && (trophy === 1 || trophy === 2 || trophy === 3)) {

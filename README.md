@@ -58,6 +58,7 @@ Player try to guessed something
 **Payload** :
 ```json
 {
+    "music": {"artist":  "", "title":  ""},
     "playerId": 1,
     "points": 3,
     "found": "",
@@ -68,6 +69,7 @@ Player try to guessed something
 
 |Field name|type|Possible values|description|
 |---------------------|:-------:|:-------:|------------:|
+|music|string|ciphered found values|the found values (artist, title or both) ciphered with client key|
 |found|string|ARTIST, TITLE, BOTH|defined whats the player found after the try (event if the player find the artist or the title before this try the value will be BOTH, this value is used to update the leaderboard summary)|
 |alreadyFound|string|NONE, ARTIST, TITLE|defined whats the player already found before the try (used to update leaderboard summary, combined with the found attribute we will know which leaderboard summary attribute need to be decrement before increment the new one)|
 |trophy|int|1, 2, 3|if the user find the both title and artist the first, second or third, none otherwise|

@@ -21,22 +21,25 @@ const socketRoomHandler = (socket, namespace) => {
                             currentPlayer,
                             1,
                             'ARTIST',
-                            '',
-                            1);
+                            'NONE',
+                            1,
+                            {artist: 'Britney spears'});
                     } else if(payload.value === 'title') {
                         emitOnGuessed(namespace,
                             currentPlayer,
                             1,
                             'TITLE',
-                            '',
-                            1);
+                            'NONE',
+                            1,
+                            {title: 'Oops I did it again'});
                     } else if(payload.value === 'both') {
                         emitOnGuessed(namespace,
                             currentPlayer,
                             3,
                             'BOTH',
-                            '',
-                            1);
+                            'NONE',
+                            1,
+                            {artist: 'Britney spears', title: 'Oops I did it again'});
                     }else {
                         emitOnFailed(namespace, currentPlayer, 0.8)
                     }
