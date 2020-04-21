@@ -42,6 +42,8 @@ router.get('/accents', function (req, res, next) {
 });
 
 const compareAlgo = require("damerau-levenshtein-js");
+const {enterRoom} = require("../services/GameService");
+const {getPlayerFromUserContext} = require("../services/GameService");
 
 const compare = (str1, str2) => {
     let start = new Date().getTime();

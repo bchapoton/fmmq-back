@@ -1,4 +1,12 @@
 const crypto = require('crypto');
+const {emitAlreadyFoundEverything} = require("../EventEmitterService");
+const {emitRoundEnds} = require("../EventEmitterService");
+const {emitRoundStarts} = require("../EventEmitterService");
+const {emitOnGuessed} = require("../EventEmitterService");
+const {emitOnFailed} = require("../EventEmitterService");
+const {compareGuessTry} = require("../GameService");
+const {sanitizeMusicElement} = require("../GameService");
+const {splitMusicElement} = require("../GameService");
 const {generateCipherKeys} = require("../CipherUtils");
 
 /**
@@ -12,6 +20,9 @@ class Room {
         this.musicScheme = musics; // all the designated music for the game, random get when creating the room
         this.currentMusicIndex = -1; // the current music id (from musicScheme array) in the game
         this.players = [];
+        this.currentMusicTropy = [];
+        this.onAir = false; // if true a music to guess is in progress
+        this.timeoutRef = null;
     }
 
     getCategoryId() {
@@ -46,32 +57,32 @@ class Room {
      * Join the player to the room
      *
      * @param object user the player
-     * @return string The player token
+     * @return Object the player object
      */
     joinRoom(user) {
         const index = playerFinder(this.players, user);
         if (index === -1) {
             const playerCipher = generateCipherKeys();
             const playerToken = crypto.createHash('md5').update(playerCipher.key).digest("hex");
-            this.players.push({
+            const playerObject = {
                 id: user.id,
                 playerToken: playerToken,
-                playerCipher: playerCipher,
                 nickname: user.nickname,
                 score: 0,
                 previousMusicIndexFound: -1, // the previous index found, useful to handle combo point when previous music was found
                 currentMusicValues: {artist: [], title: []} // hold the splitted array of the artist and the music searched
-            });
-            return playerToken;
+            };
+            this.players.push(playerObject);
+            return playerObject;
         } else {
-            return this.players[index].playerToken;
+            return this.players[index];
         }
     }
 
     isPlayerAuthenticated(playerId, playerToken) {
         const index = playerFinderById(this.players, playerId);
-        if(index !== -1) {
-            if(this.players[index].playerToken === playerToken) {
+        if (index !== -1) {
+            if (this.players[index].playerToken === playerToken) {
                 return this.players[index];
             }
         }
@@ -88,7 +99,7 @@ class Room {
     addPoint(player, point) {
         const index = playerFinder(this.players, player);
         if (index > -1) {
-            this.players[index] = this.players[index].score + point;
+            this.players[index].score = this.players[index].score + point;
         }
     }
 
@@ -108,26 +119,193 @@ class Room {
     }
 
     guess(player, str) {
+        if (!this.onAir) {
+            return; // no music to find yet
+        }
+
         if (str) {
             const index = playerFinder(this.players, player);
             if (index > -1) {
-                if (this.players[index].currentMusicValues.artist.length > 0) {
-
+                if (this.players[index].currentMusicValues.artist.length === 0
+                    && this.players[index].currentMusicValues.title.length === 0) {
+                    // already found everything
+                    emitAlreadyFoundEverything(this.getCategoryId(), player);
+                    return;
                 }
-                if (this.players[index].currentMusicValues.title.length > 0) {
 
+                let guessTryArray = splitMusicElement(sanitizeMusicElement(str));
+                console.log('-----TRY');
+                console.log(guessTryArray);
+                console.log('current player artist : ' + this.players[index].currentMusicValues.artist);
+                console.log('current player title : ' + this.players[index].currentMusicValues.title);
+
+                const stillToFindInArtistLength = this.players[index].currentMusicValues.artist.length;
+                const stillToFindInTitleLength = this.players[index].currentMusicValues.title.length;
+
+                let alreadyFound = 'NONE';
+                let foundThisRound = null;
+                let foundArtist = null;
+                let foundTitle = null;
+                let currentArtistValues = this.players[index].currentMusicValues.artist;
+                if (currentArtistValues.length > 0) {
+                    const {originalWordFound, guessWordFound} = compareGuessTry(currentArtistValues, guessTryArray);
+                    console.log('after artist original found : ' + originalWordFound);
+                    console.log('after artist try found : ' + guessWordFound);
+                    // remove found words for the title try
+                    if (guessWordFound.length > 0) {
+                        guessTryArray = guessTryArray.filter(item => !guessWordFound.includes(item));
+                    }
+                    this.players[index].currentMusicValues.artist = currentArtistValues.filter(item => !originalWordFound.includes(item));
+                    foundArtist = this.players[index].currentMusicValues.artist.length === 0;
+                    foundThisRound = foundArtist ? 'ARTIST' : null;
+                } else {
+                    alreadyFound = 'ARTIST';
+                }
+                console.log('foundThisRound : ' + foundThisRound)
+
+                let currentTitleValues = this.players[index].currentMusicValues.title;
+                if (currentTitleValues.length > 0) {
+                    const {originalWordFound, guessWordFound} = compareGuessTry(currentTitleValues, guessTryArray);
+                    this.players[index].currentMusicValues.title = currentTitleValues.filter(item => !originalWordFound.includes(item));
+                    foundTitle = this.players[index].currentMusicValues.title.length === 0;
+                    foundThisRound = foundTitle ? (foundThisRound === 'ARTIST' ? 'BOTH' : 'TITLE') : foundThisRound;
+                    console.log('after artist original found : ' + originalWordFound);
+                    console.log('after artist try found' + guessWordFound);
+                } else {
+                    alreadyFound = 'TITLE';
+                }
+                console.log('foundThisRound : ' + foundThisRound);
+                console.log('alreadyFound : ' + alreadyFound);
+
+                if (foundThisRound === null) {
+                    const stillToFindInArtistAfterGuessLength = this.players[index].currentMusicValues.artist.length;
+                    const stillToFindInTitleAfterGuessLength = this.players[index].currentMusicValues.title.length;
+
+                    let artistAccuracy = 0;
+                    if (stillToFindInArtistLength !== 0)
+                        artistAccuracy = (stillToFindInArtistLength - stillToFindInArtistAfterGuessLength) / stillToFindInArtistLength;
+                    let titleAccuracy = 0;
+                    if (stillToFindInTitleLength !== 0)
+                        titleAccuracy = (stillToFindInTitleLength - stillToFindInTitleAfterGuessLength) / stillToFindInTitleLength;
+                    console.log(Math.max(artistAccuracy, titleAccuracy));
+                    emitOnFailed(this.getCategoryId(), player, Math.max(artistAccuracy, titleAccuracy));
+                } else {
+                    const currentMusicScheme = this.getCurrentMusicFromScheme();
+                    let musicObjectFound = null;
+                    let points = 0;
+                    if (foundThisRound === 'BOTH') {
+                        points = 2;
+                        musicObjectFound = {
+                            title: currentMusicScheme.title,
+                            artist: currentMusicScheme.artist
+                        }
+                    } else if (foundThisRound === 'ARTIST') {
+                        points = 1;
+                        musicObjectFound = {
+                            artist: currentMusicScheme.artist
+                        }
+                    } else if (foundThisRound === 'TITLE') {
+                        points = 1;
+                        musicObjectFound = {
+                            title: currentMusicScheme.title
+                        }
+                    }
+
+                    let foundEveryThing = false;
+                    let trophy = 0;
+                    if (this.players[index].currentMusicValues.artist.length === 0
+                        && this.players[index].currentMusicValues.title.length === 0) {
+                        foundEveryThing = true;
+                        // user found everything handle trophy and previous music index
+                        if (this.hasFoundPreviousMusic(player)) {
+                            points += 1; // combo found the previous music
+                        }
+                        this.findBoth(player);
+
+                        if (this.currentMusicTropy.length <= 3) {
+                            this.currentMusicTropy.push(player.id);
+                            trophy = this.currentMusicTropy.length;
+                            if (trophy === 1) {
+                                points += 3;
+                            } else if (trophy === 2) {
+                                points += 2;
+                            } else if (trophy === 3) {
+                                points += 1;
+                            }
+                        }
+                    }
+                    console.log({
+                        points,
+                        foundThisRound,
+                        alreadyFound,
+                        trophy,
+                        musicObjectFound
+                    });
+                    if (points > 0) {
+                        this.addPoint(player, points);
+                        emitOnGuessed(
+                            this.getCategoryId(),
+                            player,
+                            points,
+                            foundThisRound,
+                            alreadyFound,
+                            trophy,
+                            musicObjectFound,
+                            foundEveryThing
+                        );
+                    }
                 }
             }
         }
     }
 
-    endCurrentMusic() {
+    start() {
+        this.endCurrentMusic(10000);
+    }
+
+    startCurrentMusic() {
+        this.onAir = true;
+        if (this.timeoutRef) {
+            clearTimeout(this.timeoutRef);
+        }
+
+        // clean players music scheme to find
+        const nexMusicScheme = splitCurrentMusicScheme(this.musicScheme[this.currentMusicIndex]);
+        for (let playerIndex in this.players) {
+            this.players[playerIndex].currentMusicValues = playerCurrentMusicInitialState(nexMusicScheme);
+        }
+
+        emitRoundStarts(this.getCategoryId(), this.getCurrentMusicFromScheme(), this.getCurrentMusicIndexFromZero());
+        const _self = this;
+        this.timeoutRef = setTimeout(() => {
+            _self.endCurrentMusic();
+        }, 30000);
+    }
+
+    endCurrentMusic(pauseTimerMilliseconds = 5000) {
         if (this.currentMusicIndex < this.musicScheme.length) {
-            this.currentMusicIndex = this.currentMusicIndex + 1;
-            const nexMusicScheme = splitCurrentMusicScheme(this.musicScheme[this.currentMusicIndex]);
-            for (let playerIndex in this.players) {
-                this.players[playerIndex].currentMusicValues = playerCurrentMusicInitialState(nexMusicScheme);
+            this.onAir = false;
+            this.currentMusicTropy = [];
+            let previousMusicScheme;
+            if (this.currentMusicIndex > -1) {
+                previousMusicScheme = this.musicScheme[this.currentMusicIndex];
             }
+            this.currentMusicIndex = this.currentMusicIndex + 1;
+            const nexMusicScheme = this.musicScheme[this.currentMusicIndex];
+
+            if (previousMusicScheme) {
+                // emit only if there was a music before, otherwise it's a game start !
+                emitRoundEnds(this.getCategoryId(), previousMusicScheme, nexMusicScheme);
+            }
+
+            if (this.timeoutRef) {
+                clearTimeout(this.timeoutRef);
+            }
+            const _self = this;
+            this.timeoutRef = setTimeout(() => {
+                _self.startCurrentMusic();
+            }, pauseTimerMilliseconds);
+
             return this.currentMusicIndex; // the next music will played
         }
         return -1; // the party is over
@@ -139,7 +317,7 @@ class Room {
 }
 
 const playerFinder = (array, searched) => {
-    return playerFinderById(array,searched.id);
+    return playerFinderById(array, searched.id);
 };
 
 const playerFinderById = (array, searchedId) => {
@@ -148,15 +326,15 @@ const playerFinderById = (array, searchedId) => {
 
 const splitCurrentMusicScheme = (currentMusicScheme) => {
     return {
-        artist: currentMusicScheme.artist.split(" "),
-        title: currentMusicScheme.title.split(" ")
+        artist: currentMusicScheme.artistSanitized.split(" "),
+        title: currentMusicScheme.titleSanitized.split(" ")
     }
 };
 
-const playerCurrentMusicInitialState = (currentMusicScheme = null) => {
+const playerCurrentMusicInitialState = (currentMusicScheme) => {
     return {
-        artist: [...currentMusicScheme],
-        title: [...currentMusicScheme]
+        artist: [...currentMusicScheme.artist],
+        title: [...currentMusicScheme.title]
     }
 };
 

@@ -5,7 +5,15 @@ const MusicSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    artistSanitized: {
+        type: String,
+        required: true
+    },
     title: {
+        type: String,
+        required: true
+    },
+    titleSanitized: {
         type: String,
         required: true
     },

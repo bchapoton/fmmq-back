@@ -93,3 +93,46 @@ Player failed his try
 |---------------------|:-------:|:-------:|------------:|
 |found|number|between 0 and 1|defined if the player was closed to find with his try or if it is a dumb try|
 
+
+##### ROUND_STARTS event
+
+Start the round on the current music scheme object
+
+**Name** : ROUND_STARTS
+
+**Payload** :
+```json
+{
+    "fileUrl": "https://.....",
+    "currentMusicIndexDisplayed": 1
+}
+```
+
+|Field name|type|Possible values|description|
+|---------------------|:-------:|:-------:|------------:|
+|fileUrl|string|url|music url for the round|
+|currentMusicIndexDisplayed|int||Current music index from zero for display in room the current scheme progression|
+
+
+##### ROUND_ENDS event
+
+Ends the round on the current music scheme object
+
+**Name** : ROUND_ENDS
+
+**Payload** :
+```json
+{
+    "music": {
+      "artist": "",
+      "title": ""
+    },
+    "nextFile": "https://....."
+}
+```
+
+|Field name|type|Possible values|description|
+|---------------------|:-------:|:-------:|------------:|
+|music|object||previous music information|
+|nextFile|string|url|next music url for preload purpose|
+

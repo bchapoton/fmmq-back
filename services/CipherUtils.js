@@ -23,7 +23,6 @@ const encrypt = (data, key, iv) => {
     return cipher.output.toHex();
 };
 
-
 exports.generateCipherKeys = generateCipherKeys;
 exports.decrypt = decrypt;
 exports.encrypt = encrypt;

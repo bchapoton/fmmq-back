@@ -1,4 +1,5 @@
 const serverConfig = require('../config/server');
+const {sanitizeMusicElement} = require("./GameService");
 const {Music} = require("../models/music.model");
 const {Category} = require("../models/category.model");
 const {ServerConfig} = require('../models/serverConfig.model');
@@ -37,30 +38,40 @@ const initCategory = () => {
 };
 
 const initMusic = () => {
-    const music = new Music({
-        artist: 'Britney spears',
-        title: 'Oops I did it again',
-        file: 'file.mp3'
+    const musics = [
+        {
+            artist: 'R. Kelly',
+            title: 'If I Could Turn Back The Hands Of Time',
+            file: 'music/0004037.mp3'
+        },
+        {
+            artist: 'Eiffel 65',
+            title: 'Move Your Body',
+            file: 'music/0004060.mp3'
+        },
+        {
+            artist: 'Robbie Williams',
+            title: "She's The One",
+            file: 'music/0004070.mp3'
+        },
+        {
+            artist: 'Christina Aguilera',
+            title: 'What A Girl Wants',
+            file: 'music/0004074.mp3'
+        }
+    ];
+
+    musics.forEach(music => {
+        const musicEntity = new Music(
+            Object.assign({},
+                music,
+                {
+                    artistSanitized: sanitizeMusicElement(music.artist),
+                    titleSanitized: sanitizeMusicElement(music.title)
+                })
+        );
+        musicEntity.save();
     });
-    music.save();
-    const music1 = new Music({
-        artist: 'Kmaro',
-        title: 'Femme like you',
-        file: 'file.mp3'
-    });
-    music1.save();
-    const music2 = new Music({
-        artist: 'Kenza farah',
-        title: 'kenza',
-        file: 'file.mp3'
-    });
-    music2.save();
-    const music3 = new Music({
-        artist: 'Jean jacques goldman',
-        title: 'libère moi',
-        file: 'file.mp3'
-    });
-    music3.save();
 };
 
 exports.initServerData = initServerData;

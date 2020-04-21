@@ -3,7 +3,6 @@ const {getSocket} = require("../socket/SocketHelper");
 const {createSocketRoom} = require("../socket/SocketHelper");
 const {Category} = require("../models/category.model");
 const {pickMusics} = require("./MusicService");
-const {Room} = require("./bean/Room");
 const {emitOnEnter} = require("./EventEmitterService");
 const accents = require('remove-accents');
 const compareAlgo = require("damerau-levenshtein-js");
@@ -22,12 +21,13 @@ const getCurrentRoomPlayers = (categoryId) => {
 
 const enterRoom = async (categoryId, player) => {
     let game = cacheService.get(categoryId);
-    let playerToken;
+    let playerOject;
     if (game) {
-        playerToken = joinRoom(game, player);
+        playerOject = joinRoom(game, player);
     } else {
         game = await createRoom(categoryId);
-        playerToken = joinRoom(game, player);
+        playerOject = joinRoom(game, player);
+        game.start();
     }
     const category = await Category.findById(categoryId);
 
@@ -43,7 +43,7 @@ const enterRoom = async (categoryId, player) => {
         musicsLength: game.getMusicSchemeLength(),
         leaderBoard: game.getLeaderBoard(),
         socketNamespace: categoryId,
-        playerToken: playerToken,
+        playerToken: playerOject.playerToken,
         playerId: player.id
     }
 };
@@ -55,6 +55,7 @@ const enterRoom = async (categoryId, player) => {
  * @return {Promise<Room>}
  */
 async function createRoom(categoryId) {
+    const {Room} = require("./bean/Room"); // avoid cyclic dependencies between Room and GameService leading to undefined required functions
     const musics = await pickMusics();
     const game = new Room(categoryId, musics);
     cacheService.set(categoryId, game);
@@ -66,12 +67,12 @@ async function createRoom(categoryId) {
  *
  * @param game current Room object
  * @param user the player
- * @return The player token
+ * @return Object The player object
  */
 function joinRoom(game, player) {
-    const playerToken = game.joinRoom(player);
+    const playerObject = game.joinRoom(player);
     emitOnEnter(game.getCategoryId(), player);
-    return playerToken;
+    return playerObject;
 }
 
 /**
@@ -97,7 +98,7 @@ const getPlayerFromUserContext = (req) => {
  * @return string the accents free and lower case string
  */
 const sanitizeMusicElement = (element) => {
-    return accents.remove(element).toLowerCase();
+    return accents.remove(element.trim()).toLowerCase();
 };
 
 const splitMusicElement = (element) => {
@@ -107,43 +108,49 @@ const splitMusicElement = (element) => {
 /**
  * Compare sanitizedGuessTry
  *
- * @param sanitizedOriginalStr the original string without accents and uppercase
+ * @param sanitizedOriginalStr the original split string array without accents and uppercase
  * @param sanitizedGuessTry the guess try array without accents and uppercase already split by the function splitMusicElement
  * @return {{originalWordFound: [], guessWordFound: []}} original words found in this round and the guess try found in this round
  */
-const compareGuessTry = (sanitizedOriginalStr, sanitizedGuessTrySplit) => {
+const compareGuessTry = (sanitizedOriginalSplit, sanitizedGuessTrySplit) => {
     // allow more error in long word
     const smallWordAllowedDistance = [0, 1];
     const longWordAllowedDistance = [0, 1, 2];
 
-    // split each words in the strings to compare word to word
-    const originalStrSplit = splitMusicElement(sanitizedOriginalStr);
-    const originalWordFound = [];
-    const guessWordFound = [];
+    let originalWordFound = [];
+    let guessWordFound = [];
     // copy original array, we will remove on each searched all found elements
     let internalGuessTrySplit = [...sanitizedGuessTrySplit];
 
-    originalStrSplit.forEach(originalWord => {
+    for (let i in sanitizedOriginalSplit) {
+        let originalWord = sanitizedOriginalSplit[i];
         const internalOriginalFound = [];
         const internalGuessFound = [];
-        internalGuessTrySplit.forEach(guessWord => {
+
+        for (let j in internalGuessTrySplit) {
+            let guessWord = internalGuessTrySplit[j];
             const distance = compareAlgo.distance(originalWord, guessWord);
             let isFound;
             if (originalWord.length < 5) {
-                isFound = smallWordAllowedDistance.includes(distance)
+                isFound = smallWordAllowedDistance.includes(distance);
             } else {
                 isFound = longWordAllowedDistance.includes(distance);
             }
             if (isFound) {
                 internalOriginalFound.push(originalWord);
                 internalGuessFound.push(guessWord);
+                break;
             }
-        });
-        originalWordFound.push(internalOriginalFound);
-        guessWordFound.push(internalGuessFound);
+        }
+        originalWordFound = originalWordFound.concat(internalOriginalFound);
+        guessWordFound = guessWordFound.concat(internalGuessFound);
         // remove all the found words in this iteration
         internalGuessTrySplit = internalGuessTrySplit.filter(item => !internalGuessFound.includes(item));
-    });
+        if (internalGuessTrySplit.length === 0) {
+            // no more word to search stop here
+            break;
+        }
+    }
 
     return {originalWordFound: originalWordFound, guessWordFound: guessWordFound};
 };

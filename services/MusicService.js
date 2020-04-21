@@ -5,10 +5,13 @@ const pickMusics = async (categoryId = null, count = 15) => {
     const results = [];
     musics.forEach(music => {
         results.push({
-           id: music._id.toString(),
-           artist: music.artist,
-           title: music.title
-       })
+            id: music._id.toString(),
+            artist: music.artist,
+            artistSanitized: music.artistSanitized,
+            title: music.title,
+            titleSanitized: music.titleSanitized,
+            file: music.file
+        })
     });
     return results;
 };
