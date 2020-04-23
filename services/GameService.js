@@ -20,16 +20,16 @@ const getCurrentRoomPlayers = (categoryId) => {
 };
 
 const enterRoom = async (categoryId, player) => {
+    const category = await Category.findById(categoryId);
     let game = cacheService.get(categoryId);
-    let playerOject;
+    let playerObject;
     if (game) {
-        playerOject = joinRoom(game, player);
+        playerObject = joinRoom(game, player);
     } else {
-        game = await createRoom(categoryId);
-        playerOject = joinRoom(game, player);
+        game = await createRoom(categoryId, category.label);
+        playerObject = joinRoom(game, player);
         game.start();
     }
-    const category = await Category.findById(categoryId);
 
     // create the socket if don't exists
     createSocketRoom(getSocket(), categoryId);
@@ -43,7 +43,7 @@ const enterRoom = async (categoryId, player) => {
         musicsLength: game.getMusicSchemeLength(),
         leaderBoard: game.getLeaderBoard(),
         socketNamespace: categoryId,
-        playerToken: playerOject.playerToken,
+        playerToken: playerObject.playerToken,
         playerId: player.id
     }
 };
@@ -54,10 +54,10 @@ const enterRoom = async (categoryId, player) => {
  * @param categoryId
  * @return {Promise<Room>}
  */
-async function createRoom(categoryId) {
+async function createRoom(categoryId, categoryLabel) {
     const {Room} = require("./bean/Room"); // avoid cyclic dependencies between Room and GameService leading to undefined required functions
     const musics = await pickMusics();
-    const game = new Room(categoryId, musics);
+    const game = new Room(categoryId, categoryLabel, musics);
     cacheService.set(categoryId, game);
     return game;
 }

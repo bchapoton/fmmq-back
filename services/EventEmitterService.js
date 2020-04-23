@@ -63,6 +63,12 @@ const emitRoundEnds = (categoryId, currentMusicScheme, nextMusicScheme) => {
     socket.of(categoryId).emit('ROUND_ENDS', payload);
 };
 
+const emitGameEnds = (categoryId, gameId) => {
+    socket.of(categoryId).emit('GAME_ENDS', {
+        gameId: gameId
+    });
+};
+
 const emitAlreadyFoundEverything = (categoryId, player) => {
     socket.of(categoryId).emit('ALREADY_FOUND_EVERYTHING', {playerId: player.id});
 };
@@ -73,3 +79,4 @@ exports.emitOnGuessed = emitOnGuessed;
 exports.emitRoundStarts = emitRoundStarts;
 exports.emitRoundEnds = emitRoundEnds;
 exports.emitAlreadyFoundEverything = emitAlreadyFoundEverything;
+exports.emitGameEnds = emitGameEnds;

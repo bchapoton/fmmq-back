@@ -9,7 +9,8 @@ const debug = require('debug')('quiz:server');
 
 const usersRouter = require('./routes/users');
 const gamesRouter = require('./routes/games');
-const authenticationRouter = require('./routes/Authentication')
+const roomsRouter = require('./routes/rooms');
+const authenticationRouter = require('./routes/Authentication');
 
 const app = express();
 
@@ -29,7 +30,8 @@ if(isDebug()) {
 }
 
 app.use('/users', usersRouter);
-app.use('/rooms', authMiddleware, gamesRouter);
+app.use('/rooms', authMiddleware, roomsRouter);
+app.use('/games', authMiddleware, gamesRouter);
 app.use('/auth', authenticationRouter);
 
 module.exports = app;

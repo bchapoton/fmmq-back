@@ -1,4 +1,7 @@
 const crypto = require('crypto');
+const cacheService = require('../CacheService');
+const {Game} = require("../../models/game.model");
+const {emitGameEnds} = require("../EventEmitterService");
 const {emitAlreadyFoundEverything} = require("../EventEmitterService");
 const {emitRoundEnds} = require("../EventEmitterService");
 const {emitRoundStarts} = require("../EventEmitterService");
@@ -15,12 +18,13 @@ const {generateCipherKeys} = require("../CipherUtils");
  */
 class Room {
 
-    constructor(categoryId, musics) {
+    constructor(categoryId, categoryLabel, musics) {
         this.categoryId = categoryId;
+        this.categoryLabel = categoryLabel;
         this.musicScheme = musics; // all the designated music for the game, random get when creating the room
         this.currentMusicIndex = -1; // the current music id (from musicScheme array) in the game
         this.players = [];
-        this.currentMusicTropy = [];
+        this.currentMusicTrophy = [];
         this.onAir = false; // if true a music to guess is in progress
         this.timeoutRef = null;
     }
@@ -222,9 +226,9 @@ class Room {
                         }
                         this.findBoth(player);
 
-                        if (this.currentMusicTropy.length <= 3) {
-                            this.currentMusicTropy.push(player.id);
-                            trophy = this.currentMusicTropy.length;
+                        if (this.currentMusicTrophy.length <= 3) {
+                            this.currentMusicTrophy.push(player.id);
+                            trophy = this.currentMusicTrophy.length;
                             if (trophy === 1) {
                                 points += 3;
                             } else if (trophy === 2) {
@@ -282,33 +286,76 @@ class Room {
         }, 30000);
     }
 
-    endCurrentMusic(pauseTimerMilliseconds = 5000) {
-        if (this.currentMusicIndex < this.musicScheme.length) {
-            this.onAir = false;
-            this.currentMusicTropy = [];
-            let previousMusicScheme;
-            if (this.currentMusicIndex > -1) {
-                previousMusicScheme = this.musicScheme[this.currentMusicIndex];
-            }
-            this.currentMusicIndex = this.currentMusicIndex + 1;
-            const nexMusicScheme = this.musicScheme[this.currentMusicIndex];
+    async endCurrentMusic(pauseTimerMilliseconds = 5000) {
+        this.onAir = false;
+        this.currentMusicTrophy = [];
+        let previousMusicScheme;
+        if (this.currentMusicIndex > -1) {
+            previousMusicScheme = this.musicScheme[this.currentMusicIndex];
+        }
+        this.currentMusicIndex = this.currentMusicIndex + 1;
 
+        if (this.timeoutRef) {
+            clearTimeout(this.timeoutRef);
+        }
+
+        if (this.currentMusicIndex >= this.musicScheme.length) {
+            // game is over
+            console.log(this.categoryId);
+            console.log(this.musicScheme);
+            console.log(this.players);
+
+            const gameMusicScheme = [];
+            this.musicScheme.forEach(music => {
+                gameMusicScheme.push({
+                   id: music.id,
+                    artist: music.artist,
+                    title: music.title
+                });
+            });
+
+            const sortedPlayers = playersSorter(this.players);
+            const podium = [];
+            const leaderBoard = [];
+            sortedPlayers.forEach(player => {
+                const playerToStore = {
+                    id: player.id,
+                    nickname: player.nickname,
+                    score: player.score
+                };
+
+                if(podium.length <= 3) {
+                    podium.push(playerToStore);
+                }
+                leaderBoard.push(playerToStore);
+            });
+
+            // clean the game in cache
+            cacheService.delete(this.getCategoryId());
+
+            const game = new Game({
+                categoryId: this.getCategoryId(),
+                categoryLabel: this.categoryLabel,
+                musicScheme: JSON.stringify(gameMusicScheme),
+                leaderBoard: JSON.stringify(leaderBoard),
+                podium: JSON.stringify(podium),
+                date: new Date()
+            });
+            await game.save();
+
+            emitGameEnds(this.getCategoryId(), game._id);
+        } else {
+            const nexMusicScheme = this.musicScheme[this.currentMusicIndex];
             if (previousMusicScheme) {
                 // emit only if there was a music before, otherwise it's a game start !
                 emitRoundEnds(this.getCategoryId(), previousMusicScheme, nexMusicScheme);
-            }
-
-            if (this.timeoutRef) {
-                clearTimeout(this.timeoutRef);
             }
             const _self = this;
             this.timeoutRef = setTimeout(() => {
                 _self.startCurrentMusic();
             }, pauseTimerMilliseconds);
-
-            return this.currentMusicIndex; // the next music will played
         }
-        return -1; // the party is over
+
     }
 
     getCurrentMusicFromScheme() {
@@ -336,6 +383,18 @@ const playerCurrentMusicInitialState = (currentMusicScheme) => {
         artist: [...currentMusicScheme.artist],
         title: [...currentMusicScheme.title]
     }
+};
+
+const playersSorter = (players) => {
+    if (!players || players.length === 0) {
+        return [];
+    }
+
+    return players.slice().sort((item1, item2) => {
+        const score1 = item1.score ? item1.score : 0;
+        const score2 = item2.score ? item2.score : 0;
+        return (score1 - score2) * -1; // desc sorting
+    });
 };
 
 module.exports.Room = Room;
