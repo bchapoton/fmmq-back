@@ -1,9 +1,15 @@
 #!/usr/bin/env node
+const fs = require('fs');
+
+if(!fs.existsSync('./logs')) {
+    fs.mkdirSync('./logs');
+}
 
 /**
  * Module dependencies.
  */
 
+const {logError, logInfo} = require("../logger/Logger");
 const app = require('../app');
 const debug = require('debug')('quiz:server');
 const http = require('http');
@@ -14,13 +20,13 @@ const SocketIO = require('socket.io');
 
 
 if (!getPrivateKey()) {
-    console.error("FATAL ERROR: private key is not defined.");
+    logError("FATAL ERROR: private key is not defined.");
     process.exit(1);
 }
 
 const mongoDBUri = getMongoDBUri();
 if (!mongoDBUri) {
-    console.error("FATAL ERROR: MongoDb uri is not defined.");
+    logError("FATAL ERROR: MongoDb uri is not defined.");
     process.exit(1);
 }
 
@@ -28,9 +34,9 @@ if (!mongoDBUri) {
 mongoose
     .connect(mongoDBUri,
         {useUnifiedTopology: true, useNewUrlParser: true})
-    .then(() => console.log("Connected to MongoDB..."))
+    .then(() => logInfo("Connected to MongoDB..."))
     .catch(err => {
-        console.error("FATAL ERROR: Could not connect to MongoDB...");
+        logError("FATAL ERROR: Could not connect to MongoDB...");
         process.exit(1);
     });
 
@@ -102,11 +108,11 @@ function onError(error) {
     // handle specific listen errors with friendly messages
     switch (error.code) {
         case 'EACCES':
-            console.error(bind + ' requires elevated privileges');
+            logError(bind + ' requires elevated privileges');
             process.exit(1);
             break;
         case 'EADDRINUSE':
-            console.error(bind + ' is already in use');
+            logError(bind + ' is already in use');
             process.exit(1);
             break;
         default:

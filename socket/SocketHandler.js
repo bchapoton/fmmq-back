@@ -1,8 +1,10 @@
 const cacheService = require('../services/CacheService');
+const {logWarn} = require("../logger/Logger");
+const {logInfo} = require("../logger/Logger");
 const {emitOnFailed, emitOnGuessed} = require("../services/EventEmitterService");
 
 const socketRoomHandler = (socket, namespace) => {
-    console.log('socket connected on namespace ' + namespace);
+    logInfo('socket connected on namespace ' + namespace);
 
     socket.emit('welcome', 'welcome in namespace ' + namespace);
 
@@ -14,18 +16,18 @@ const socketRoomHandler = (socket, namespace) => {
                 if (currentPlayer) {
                     room.guess(currentPlayer, payload.value);
                 } else {
-                    console.log(`Unauthorized attempt / player id : ${payload.playerId} / player token : ${payload.playerToken}`);
+                    logWarn(`Unauthorized attempt / player id : ${payload.playerId} / player token : ${payload.playerToken}`);
                 }
             } else {
-                console.log('cant find the room');
+                logWarn('cant find the room');
             }
         } else {
-            console.log('Bad event');
+            logWarn('Bad event');
         }
     });
 
     socket.on("disconnect", (data) => {
-        console.log("Client disconnected : " + data + ' from namespace ' + namespace);
+        logInfo("Client disconnected : " + data + ' from namespace ' + namespace);
     });
 };
 

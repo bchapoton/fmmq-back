@@ -29,9 +29,9 @@ const accents = require('remove-accents');
 const testRemove = (str) => {
     let start = new Date().getTime();
     const removed = accents.remove(str);
-    console.log('time : ' + (new Date().getTime() - start));
-    console.log('original :' + str);
-    console.log('removed  :' + removed);
+    logDebug('time : ' + (new Date().getTime() - start));
+    logDebug('original :' + str);
+    logDebug('removed  :' + removed);
 }
 
 router.get('/accents', function (req, res, next) {
@@ -42,6 +42,7 @@ router.get('/accents', function (req, res, next) {
 });
 
 const compareAlgo = require("damerau-levenshtein-js");
+const {logDebug} = require("../logger/Logger");
 const {enterRoom} = require("../services/GameService");
 const {getPlayerFromUserContext} = require("../services/GameService");
 
@@ -53,15 +54,15 @@ const compare = (str1, str2) => {
     */
 
     const distance = compareAlgo.distance(str1, str2);
-    console.log('time : ' + (new Date().getTime() - start));
-    console.log('string : ' + str1);
-    console.log('string : ' + str2);
-    console.log('distance : ' + distance);
+    logDebug('time : ' + (new Date().getTime() - start));
+    logDebug('string : ' + str1);
+    logDebug('string : ' + str2);
+    logDebug('distance : ' + distance);
 };
 
 
 const compare2 = (originalString, guessTryStr) => {
-    console.log('------------------------------------------')
+    logDebug('------------------------------------------')
     let start = new Date().getTime();
     // allow more error in long word
     const smallWordAllowedDistance = [0, 1];
@@ -97,14 +98,14 @@ const compare2 = (originalString, guessTryStr) => {
         found.push(internalOriginalFound);
         // remove all the found words in this iteration
         internalGuessTrySplit = internalGuessTrySplit.filter(item => !internalGuessFound.includes(item));
-        console.log('iteration guess try split : ' + internalGuessTrySplit);
+        logDebug('iteration guess try split : ' + internalGuessTrySplit);
     });
-    console.log('time : ' + (new Date().getTime() - start));
-    console.log('string : ' + originalString);
-    console.log('san    : ' + sanitizedOriginalStr);
-    console.log('string : ' + guessTryStr);
-    console.log('san    : ' + sanitizedGuessTry);
-    console.log('found : ' + found);
+    logDebug('time : ' + (new Date().getTime() - start));
+    logDebug('string : ' + originalString);
+    logDebug('san    : ' + sanitizedOriginalStr);
+    logDebug('string : ' + guessTryStr);
+    logDebug('san    : ' + sanitizedGuessTry);
+    logDebug('found : ' + found);
 };
 
 router.get('/compare', function (req, res, next) {

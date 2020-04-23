@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const cacheService = require('../CacheService');
+const {logDebug} = require("../../logger/Logger");
 const {Game} = require("../../models/game.model");
 const {emitGameEnds} = require("../EventEmitterService");
 const {emitAlreadyFoundEverything} = require("../EventEmitterService");
@@ -138,10 +139,10 @@ class Room {
                 }
 
                 let guessTryArray = splitMusicElement(sanitizeMusicElement(str));
-                console.log('-----TRY');
-                console.log(guessTryArray);
-                console.log('current player artist : ' + this.players[index].currentMusicValues.artist);
-                console.log('current player title : ' + this.players[index].currentMusicValues.title);
+                logDebug('-----TRY');
+                logDebug(guessTryArray);
+                logDebug('current player artist : ' + this.players[index].currentMusicValues.artist);
+                logDebug('current player title : ' + this.players[index].currentMusicValues.title);
 
                 const stillToFindInArtistLength = this.players[index].currentMusicValues.artist.length;
                 const stillToFindInTitleLength = this.players[index].currentMusicValues.title.length;
@@ -153,8 +154,8 @@ class Room {
                 let currentArtistValues = this.players[index].currentMusicValues.artist;
                 if (currentArtistValues.length > 0) {
                     const {originalWordFound, guessWordFound} = compareGuessTry(currentArtistValues, guessTryArray);
-                    console.log('after artist original found : ' + originalWordFound);
-                    console.log('after artist try found : ' + guessWordFound);
+                    logDebug('after artist original found : ' + originalWordFound);
+                    logDebug('after artist try found : ' + guessWordFound);
                     // remove found words for the title try
                     if (guessWordFound.length > 0) {
                         guessTryArray = guessTryArray.filter(item => !guessWordFound.includes(item));
@@ -165,7 +166,7 @@ class Room {
                 } else {
                     alreadyFound = 'ARTIST';
                 }
-                console.log('foundThisRound : ' + foundThisRound)
+                logDebug('foundThisRound : ' + foundThisRound)
 
                 let currentTitleValues = this.players[index].currentMusicValues.title;
                 if (currentTitleValues.length > 0) {
@@ -173,13 +174,13 @@ class Room {
                     this.players[index].currentMusicValues.title = currentTitleValues.filter(item => !originalWordFound.includes(item));
                     foundTitle = this.players[index].currentMusicValues.title.length === 0;
                     foundThisRound = foundTitle ? (foundThisRound === 'ARTIST' ? 'BOTH' : 'TITLE') : foundThisRound;
-                    console.log('after artist original found : ' + originalWordFound);
-                    console.log('after artist try found' + guessWordFound);
+                    logDebug('after artist original found : ' + originalWordFound);
+                    logDebug('after artist try found' + guessWordFound);
                 } else {
                     alreadyFound = 'TITLE';
                 }
-                console.log('foundThisRound : ' + foundThisRound);
-                console.log('alreadyFound : ' + alreadyFound);
+                logDebug('foundThisRound : ' + foundThisRound);
+                logDebug('alreadyFound : ' + alreadyFound);
 
                 if (foundThisRound === null) {
                     const stillToFindInArtistAfterGuessLength = this.players[index].currentMusicValues.artist.length;
@@ -191,7 +192,7 @@ class Room {
                     let titleAccuracy = 0;
                     if (stillToFindInTitleLength !== 0)
                         titleAccuracy = (stillToFindInTitleLength - stillToFindInTitleAfterGuessLength) / stillToFindInTitleLength;
-                    console.log(Math.max(artistAccuracy, titleAccuracy));
+                    logDebug(Math.max(artistAccuracy, titleAccuracy));
                     emitOnFailed(this.getCategoryId(), player, Math.max(artistAccuracy, titleAccuracy));
                 } else {
                     const currentMusicScheme = this.getCurrentMusicFromScheme();
@@ -238,7 +239,7 @@ class Room {
                             }
                         }
                     }
-                    console.log({
+                    logDebug({
                         points,
                         foundThisRound,
                         alreadyFound,
@@ -301,9 +302,9 @@ class Room {
 
         if (this.currentMusicIndex >= this.musicScheme.length) {
             // game is over
-            console.log(this.categoryId);
-            console.log(this.musicScheme);
-            console.log(this.players);
+            logDebug(this.categoryId);
+            logDebug(this.musicScheme);
+            logDebug(this.players);
 
             const gameMusicScheme = [];
             this.musicScheme.forEach(music => {

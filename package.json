@@ -21,6 +21,7 @@
     "node-cache": "^5.1.0",
     "node-forge": "^0.9.1",
     "remove-accents": "^0.4.2",
-    "socket.io": "^2.3.0"
+    "socket.io": "^2.3.0",
+    "winston": "^3.2.1"
   }
 }

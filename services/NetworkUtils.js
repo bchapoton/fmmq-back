@@ -6,6 +6,7 @@
  * @param req
  * @return int limit pager value
  */
+const {logWarn} = require("../logger/Logger");
 exports.getPagerFromRequest = (req) => {
     const pager = req.header('pager');
     if(pager) {
@@ -16,7 +17,7 @@ exports.getPagerFromRequest = (req) => {
             }
         } catch (e) {
             // in case of error in parseInt log and let return the default value
-            console.log("can't parse pager value : " + pager);
+            logWarn("can't parse pager value : " + pager);
         }
     }
     return 5;

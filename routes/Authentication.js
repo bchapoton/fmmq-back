@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const {User} = require('../models/user.model');
 const {RefreshToken} = require('../models/refreshToken.model');
 const AuthService = require('../services/AuthService');
+const {logError} = require("../logger/Logger");
 
 /**
  * Login route
@@ -91,7 +92,7 @@ router.post('/refresh', async function (req, res, next) {
             return;
         } catch (e) {
             // nothing to do handled bellow
-            console.error('exception occured : ' + e );
+            logError('exception occured on refresh token endpoint : ' + e );
         }
     }
     res.status(401).send({message: 'Access Denied'});

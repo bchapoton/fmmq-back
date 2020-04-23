@@ -27,3 +27,6 @@ yarn-error.log*
 
 # scraper
 /bin/temp
+
+# logs
+/logs

@@ -1,4 +1,5 @@
 const serverConfig = require('../config/server');
+const {logInfo} = require("../logger/Logger");
 const {sanitizeMusicElement} = require("./GameService");
 const {Music} = require("../models/music.model");
 const {Category} = require("../models/category.model");
@@ -7,12 +8,12 @@ const {ServerConfig} = require('../models/serverConfig.model');
 const initServerData = async () => {
     const serverConfigEntity = await ServerConfig.findOne();
     if(!serverConfigEntity) {
-        console.log('initialize server in version ' + serverConfig.version);
+        logInfo('initialize server in version ' + serverConfig.version);
         initServerConfig();
         initCategory();
         initMusic();
     } else {
-        console.log('FMMQ server v' + serverConfigEntity.version);
+        logInfo('FMMQ server v' + serverConfigEntity.version);
     }
 };
 
