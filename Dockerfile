@@ -19,4 +19,4 @@ VOLUME /app/logs
 
 EXPOSE 8080
 
-CMD [ "node", "/bin/www" ]
+CMD [ "node", "/app/bin/www" ]
