@@ -1,1 +1,1 @@
-docker build -t bchapoton/fmmq-back:0.1 .
+docker build -t bchapoton/fmmq-back:0.1.1 .
