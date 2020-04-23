@@ -9,15 +9,19 @@ if(!fs.existsSync('./logs')) {
  * Module dependencies.
  */
 
-const {logError, logInfo} = require("../logger/Logger");
+const {logError, logInfo, logDebug} = require("../logger/Logger");
+const {isDebug} = require("../services/SystemService");
 const app = require('../app');
-const debug = require('debug')('quiz:server');
 const http = require('http');
 const mongoose = require('mongoose');
 const {getNodePort, getMongoDBUri, getPrivateKey} = require("../services/SystemService");
 const {initServerData} = require("../services/InitService");
 const SocketIO = require('socket.io');
 
+if(isDebug()) {
+    logDebug('Server started in DEBUG MODE');
+    logDebug('mongodb uri : ' + getMongoDBUri());
+}
 
 if (!getPrivateKey()) {
     logError("FATAL ERROR: private key is not defined.");
@@ -36,7 +40,7 @@ mongoose
         {useUnifiedTopology: true, useNewUrlParser: true})
     .then(() => logInfo("Connected to MongoDB..."))
     .catch(err => {
-        logError("FATAL ERROR: Could not connect to MongoDB...");
+        logError("FATAL ERROR: Could not connect to MongoDB... " + err);
         process.exit(1);
     });
 
@@ -129,5 +133,5 @@ function onListening() {
     const bind = typeof addr === 'string'
         ? 'pipe ' + addr
         : 'port ' + addr.port;
-    debug('Listening on ' + bind);
+    logDebug('Listening on ' + bind);
 }

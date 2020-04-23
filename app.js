@@ -5,7 +5,6 @@ const logger = require('morgan');
 const authMiddleware = require('./middleware/Auth');
 const cors = require('cors');
 const {isDebug} = require("./services/SystemService");
-const debug = require('debug')('quiz:server');
 
 const usersRouter = require('./routes/users');
 const gamesRouter = require('./routes/games');
@@ -20,11 +19,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 const bodyParser = require('body-parser');
+const {logDebug} = require("./logger/Logger");
 app.use(bodyParser.json());
 app.use(cors());
 
 if(isDebug()) {
-    debug('Server started in DEBUG MODE');
+    logDebug('Server in DEBUG MODE mount debug express router');
     const debugRouter = require('./routes/debug');
     app.use('/debug', debugRouter);
 }
