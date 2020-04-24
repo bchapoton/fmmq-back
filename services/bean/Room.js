@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const cacheService = require('../CacheService');
+const {emitOperatorMessage} = require("../EventEmitterService");
 const {logDebug} = require("../../logger/Logger");
 const {Game} = require("../../models/game.model");
 const {emitGameEnds} = require("../EventEmitterService");
@@ -291,6 +292,7 @@ class Room {
         this.onAir = false;
         this.currentMusicTrophy = [];
         let previousMusicScheme;
+        let previousMusicIndex = this.currentMusicIndex;
         if (this.currentMusicIndex > -1) {
             previousMusicScheme = this.musicScheme[this.currentMusicIndex];
         }
@@ -302,14 +304,10 @@ class Room {
 
         if (this.currentMusicIndex >= this.musicScheme.length) {
             // game is over
-            logDebug(this.categoryId);
-            logDebug(this.musicScheme);
-            logDebug(this.players);
-
             const gameMusicScheme = [];
             this.musicScheme.forEach(music => {
                 gameMusicScheme.push({
-                   id: music.id,
+                    id: music.id,
                     artist: music.artist,
                     title: music.title
                 });
@@ -325,7 +323,7 @@ class Room {
                     score: player.score
                 };
 
-                if(podium.length <= 3) {
+                if (podium.length <= 3) {
                     podium.push(playerToStore);
                 }
                 leaderBoard.push(playerToStore);
@@ -350,6 +348,10 @@ class Room {
             if (previousMusicScheme) {
                 // emit only if there was a music before, otherwise it's a game start !
                 emitRoundEnds(this.getCategoryId(), previousMusicScheme, nexMusicScheme);
+                emitOperatorMessage(this.getCategoryId(),
+                    previousMusicIndex + 1,
+                    previousMusicScheme.artist,
+                    previousMusicScheme.title);
             }
             const _self = this;
             this.timeoutRef = setTimeout(() => {

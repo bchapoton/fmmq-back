@@ -31,11 +31,6 @@ const initCategory = () => {
         description: 'Toutes les musiques du serveur dans une salle'
     });
     category.save();
-    const category2 = new Category({
-        label: 'Année 2000',
-        description: 'Catégorie de test vide'
-    });
-    category2.save();
 };
 
 const initMusic = () => {

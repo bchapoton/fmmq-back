@@ -79,11 +79,15 @@ router.post('/refresh', async function (req, res, next) {
             let decoded = AuthService.decodeToken(req.body.token);
             const user = await User.findOne({email: decoded.email});
             if (!user) {
-                throw 'Access Denied'
+                logError('user is not defined on refresh token, decoded jwt : ' + decoded);
+                res.status(401).send({message: 'Access Denied'});
+                return;
             }
             const refreshTokenEntity = await RefreshToken.findOne({refreshToken: req.body.refreshToken, user: user._id});
             if (!refreshTokenEntity) {
-                throw 'Access Denied'
+                logError("can't find refreshTokenEntity, decoded jwt : " + decoded);
+                res.status(401).send({message: 'Access Denied'});
+                return;
             }
             refreshTokenEntity.delete();
             const newRefreshToken = await AuthService.generateRefreshToken(user);

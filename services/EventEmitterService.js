@@ -1,4 +1,5 @@
 const socket = require('../socket/FMMQSocket');
+const {getRoomChatNamespace} = require("../socket/NamespaceHelper");
 
 const emitOnEnter = (categoryId, player) => {
     socket.of(categoryId).emit('ENTER', player);
@@ -73,6 +74,21 @@ const emitAlreadyFoundEverything = (categoryId, player) => {
     socket.of(categoryId).emit('ALREADY_FOUND_EVERYTHING', {playerId: player.id});
 };
 
+const emitMessageOnChat = (categoryId, payload) => {
+    socket.of(getRoomChatNamespace(categoryId)).emit('MESSAGE_RECEIVED', payload)
+};
+
+const emitOperatorMessage = (categoryId, currentIndexFromZero, artist, title) => {
+    socket.of(getRoomChatNamespace(categoryId)).emit('MESSAGE_RECEIVED', {
+        musicIndex: currentIndexFromZero,
+        time: new Date().getTime(),
+        artist: artist,
+        title: title,
+        playerId: 'operator',
+        playerNickname: 'operator'
+    });
+}
+
 exports.emitOnEnter = emitOnEnter;
 exports.emitOnFailed = emitOnFailed;
 exports.emitOnGuessed = emitOnGuessed;
@@ -80,3 +96,5 @@ exports.emitRoundStarts = emitRoundStarts;
 exports.emitRoundEnds = emitRoundEnds;
 exports.emitAlreadyFoundEverything = emitAlreadyFoundEverything;
 exports.emitGameEnds = emitGameEnds;
+exports.emitMessageOnChat = emitMessageOnChat;
+exports.emitOperatorMessage = emitOperatorMessage;

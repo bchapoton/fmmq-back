@@ -1,5 +1,7 @@
 const {socketRoomHandler} = require("./SocketHandler");
 const cacheService = require('../services/CacheService');
+const {getRoomChatNamespace} = require("./NamespaceHelper");
+const {socketRoomChatHandler} = require("./SocketHandler");
 const SOCKETS_NAMESPACE_CACHE_KEY = 'FMMQ-sockets-namespaces';
 
 // TODO for now we don't delete namespace, see later if it needed
@@ -53,7 +55,10 @@ const createNamespace = (socket, namespace, handler) => {
 };
 
 const createSocketRoom = (socket, categoryId) => {
+    // game room socket
     createNamespace(socket, '/' + categoryId, socketRoomHandler);
+    // chat room socket
+    createNamespace(socket, '/' + getRoomChatNamespace(categoryId), socketRoomChatHandler);
 };
 
 const getSocket = () => {
