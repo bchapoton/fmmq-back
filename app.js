@@ -3,10 +3,12 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const authMiddleware = require('./middleware/Auth');
+const adminRoleMiddleWare = require('./middleware/AdminRole');
 const cors = require('cors');
 const {isDebug} = require("./services/SystemService");
 
 const usersRouter = require('./routes/users');
+const adminRouter = require('./routes/admin');
 const gamesRouter = require('./routes/games');
 const roomsRouter = require('./routes/rooms');
 const authenticationRouter = require('./routes/Authentication');
@@ -30,6 +32,7 @@ if(isDebug()) {
 }
 
 app.use('/users', usersRouter);
+app.use('/admin', authMiddleware, adminRoleMiddleWare, adminRouter);
 app.use('/rooms', authMiddleware, roomsRouter);
 app.use('/games', authMiddleware, gamesRouter);
 app.use('/auth', authenticationRouter);
