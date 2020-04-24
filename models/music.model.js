@@ -21,6 +21,10 @@ const MusicSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    randomInt: {
+        type: Number,
+        required: true
+    }
 });
 
 const Music = mongoose.model('Music', MusicSchema);

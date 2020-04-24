@@ -1,4 +1,5 @@
 const serverConfig = require('../config/server');
+const {getMusicRandomInt} = require("./MusicService");
 const {logInfo} = require("../logger/Logger");
 const {sanitizeMusicElement} = require("./GameService");
 const {Music} = require("../models/music.model");
@@ -63,7 +64,8 @@ const initMusic = () => {
                 music,
                 {
                     artistSanitized: sanitizeMusicElement(music.artist),
-                    titleSanitized: sanitizeMusicElement(music.title)
+                    titleSanitized: sanitizeMusicElement(music.title),
+                    randomInt: getMusicRandomInt()
                 })
         );
         musicEntity.save();

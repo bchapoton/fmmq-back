@@ -17,6 +17,8 @@ COPY . .
 
 VOLUME /app/logs
 
+VOLUME /app/public/music
+
 EXPOSE 8080
 
 CMD [ "node", "/app/bin/www" ]
