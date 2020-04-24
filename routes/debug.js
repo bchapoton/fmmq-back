@@ -26,22 +26,8 @@ async function setAdmin(mail) {
 }
 
 router.get('/testImport', async function (req,res, next) {
-    doImport();
+    await doImport();
     res.send({ok: 'ok'});
 });
-
-router.get('/testRandom', async function (req,res, next) {
-
-    const result = await pickMusicsDebug(null, 2);
-    res.send(result);
-});
-
-function getRandomIntArbitrary(min, max) {
-    return parseInt(Math.random() * (max - min) + min);
-}
-
-function getRandomSortDirection() {
-    return Math.random() < 0.5 ? '-' : '';
-}
 
 module.exports = router;
