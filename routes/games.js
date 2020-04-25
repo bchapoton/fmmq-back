@@ -26,6 +26,7 @@ router.get('/over/:gameId', (req, res, next) => {
 router.get('/podiums', (req, res, next) => {
     const pager = getPagerFromRequest(req);
     Game.find()
+        .skip(pager.start)
         .limit(pager.limit)
         .sort('-date')
         .then( games => {
