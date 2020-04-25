@@ -2,8 +2,9 @@ var express = require('express');
 var router = express.Router();
 
 const gameCache = require('../services/CacheService');
-const {doImport} = require("../importMusics/MusicImporterService");
-const {pickMusicsDebug} = require("../services/MusicService");
+const {pickMusics} = require("../services/MusicService");
+const {sanitizeMusicElement} = require("../services/GameService");
+const {Music} = require("../models/music.model");
 const {ROLE_ADMIN} = require("../constant/roles");
 const {User} = require('../models/user.model');
 
@@ -25,9 +26,15 @@ async function setAdmin(mail) {
         {role: ROLE_ADMIN});
 }
 
-router.get('/testImport', async function (req,res, next) {
-    await doImport();
-    res.send({ok: 'ok'});
+router.get('/test', async function (req, res, next) {
+    const musics = await pickMusics();
+    const results = [];
+    for(let index in musics) {
+        results.push(musics[index].artist + ' - ' + musics[index].title);
+    }
+    res.json(results);
 });
+
+
 
 module.exports = router;

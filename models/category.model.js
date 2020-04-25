@@ -10,6 +10,10 @@ const CategorySchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    order: {
+        type: Number,
+        index: true
+    }
 });
 
 const Category = mongoose.model('Category', CategorySchema);

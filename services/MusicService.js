@@ -1,8 +1,9 @@
 const {Music} = require('../models/music.model');
 
+const musicPickStep = 3;
+
 const pickMusics = async (categoryId = null, count = 15) => {
-    const sorter = getRandomSortDirection() + 'randomInt';
-    const musics = await Music.find().sort(sorter).limit(count);
+    const musics = await pickRangedMusic(count);
     const results = [];
     musics.forEach(music => {
         results.push({
@@ -19,8 +20,35 @@ const pickMusics = async (categoryId = null, count = 15) => {
     return results;
 };
 
+async function pickRangedMusic(count) {
+    const totalMusicCount = await Music.countDocuments();
+    const sorter = getRandomSortDirection() + 'randomInt';
+    let picked = [];
+    while(picked.length < count) {
+        const skip = getRandomInt(0, totalMusicCount - musicPickStep);
+        const musics = await Music.find().sort(sorter).skip(skip).limit(musicPickStep);
+        picked = addIfNotAlreadyPicked(picked, musics, count);
+    }
+    return picked;
+}
+
+function addIfNotAlreadyPicked(array, values, count) {
+    const results = [...array];
+    for(let index in values) {
+        const value = values[index];
+        if(array.filter(music => music._id.toString() === value._id.toString()).length === 0) {
+            if(results.length < count) {
+                results.push(value);
+            } else {
+                break;
+            }
+        }
+    }
+    return results;
+}
+
 function getMusicRandomInt() {
-    return getRandomInt(0, 1000000);
+    return getRandomInt(0, 10000);
 }
 
 function getRandomInt(min, max) {
@@ -31,5 +59,14 @@ function getRandomSortDirection() {
     return Math.random() < 0.5 ? '-' : '';
 }
 
+async function deleteMusicByImportId(importEntityId) {
+    const musics = await Music.find({importObjectId: importEntityId});
+    for(let index in musics) {
+        const music = musics[index];
+        music.delete();
+    }
+}
+
 exports.pickMusics = pickMusics;
 exports.getMusicRandomInt = getMusicRandomInt;
+exports.deleteMusicByImportId = deleteMusicByImportId;

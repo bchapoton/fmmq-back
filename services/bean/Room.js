@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const cacheService = require('../CacheService');
+const {sanitizeGuess} = require("../GameService");
 const {emitOperatorMessage} = require("../EventEmitterService");
 const {logDebug} = require("../../logger/Logger");
 const {Game} = require("../../models/game.model");
@@ -10,7 +11,6 @@ const {emitRoundStarts} = require("../EventEmitterService");
 const {emitOnGuessed} = require("../EventEmitterService");
 const {emitOnFailed} = require("../EventEmitterService");
 const {compareGuessTry} = require("../GameService");
-const {sanitizeMusicElement} = require("../GameService");
 const {splitMusicElement} = require("../GameService");
 const {generateCipherKeys} = require("../CipherUtils");
 
@@ -139,7 +139,7 @@ class Room {
                     return;
                 }
 
-                let guessTryArray = splitMusicElement(sanitizeMusicElement(str));
+                let guessTryArray = splitMusicElement(sanitizeGuess(str));
                 logDebug('-----TRY');
                 logDebug(guessTryArray);
                 logDebug('current player artist : ' + this.players[index].currentMusicValues.artist);

@@ -23,7 +23,12 @@ const MusicSchema = new mongoose.Schema({
     },
     randomInt: {
         type: Number,
-        required: true
+        required: true,
+        index: true
+    },
+    importObjectId: {
+        type: String,
+        index: true
     }
 });
 

@@ -30,3 +30,6 @@ yarn-error.log*
 
 # logs
 /logs
+
+#debug musics
+/public/music/*/*.mp3

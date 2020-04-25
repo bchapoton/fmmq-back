@@ -4,7 +4,7 @@ const {Category} = require("../models/category.model");
 const router = express.Router();
 
 router.get('/categories', async (req, res, next) => {
-    const categories = await Category.find();
+    const categories = await Category.find().sort('order');
     const results = [];
     categories.forEach(category => {
         results.push(Object.assign(

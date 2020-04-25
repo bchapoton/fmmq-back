@@ -98,8 +98,37 @@ const getPlayerFromUserContext = (req) => {
  * @return string the accents free and lower case string
  */
 const sanitizeMusicElement = (element) => {
-    return accents.remove(element.trim()).toLowerCase();
+    const elementLowerWithoutAccent = removeAccentToLowerCase(element);
+    return clean(elementLowerWithoutAccent);
 };
+
+const sanitizeGuess = (element) => {
+    return removeAccentToLowerCase(element);
+};
+
+function removeAccentToLowerCase(element) {
+    return accents.remove(element.trim()).toLowerCase();
+}
+
+function clean(str) {
+    return cleanForbiddenWords(str, ['feat.', '...']);
+}
+
+function cleanForbiddenWords(str, words) {
+    const strArr = str.split(' ');
+    const result = [];
+    for (let index in strArr) {
+        const strItem = strArr[index];
+        if (strItem.length > 1 && !words.includes(strItem)) {
+            result.push(strItem);
+        }
+    }
+    let cleaned = result.join(' ');
+    if(cleaned.indexOf('(') && cleaned.indexOf(')')) {
+        cleaned = cleaned.substring(0, cleaned.indexOf('(')) + cleaned.substring(cleaned.indexOf(')') + 1);
+    }
+    return cleaned.trim();
+}
 
 const splitMusicElement = (element) => {
     return element.split(' ');
@@ -159,5 +188,6 @@ exports.getCurrentRoomPlayers = getCurrentRoomPlayers;
 exports.enterRoom = enterRoom;
 exports.getPlayerFromUserContext = getPlayerFromUserContext;
 exports.sanitizeMusicElement = sanitizeMusicElement;
+exports.sanitizeGuess = sanitizeGuess;
 exports.splitMusicElement = splitMusicElement;
 exports.compareGuessTry = compareGuessTry;
