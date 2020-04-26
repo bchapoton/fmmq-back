@@ -6,6 +6,15 @@ const {getPagerFromRequest} = require("../services/NetworkUtils");
 const {User} = require("../models/user.model");
 const {Category} = require("../models/category.model");
 const serverConfig = require('../config/server');
+const {putUserRole} = require("../services/UserService");
+const {findUserById} = require("../services/UserService");
+const {createImport} = require("../services/ImportService");
+const {createCategory} = require("../services/CategoryService");
+const {updateCategory} = require("../services/CategoryService");
+const {findCategoryById} = require("../services/CategoryService");
+const {deleteImport} = require("../services/ImportService");
+const {findImportById} = require("../services/ImportService");
+const {doImport} = require("../services/ImportService");
 const {deleteMusicByImportId} = require("../services/MusicService");
 const {getMusicRandomInt} = require("../services/MusicService");
 const {sanitizeMusicElement} = require("../services/GameService");
@@ -41,53 +50,42 @@ router.get('/users', function (req, res, next) {
     adminListObjects(res, req, User, 'nickname');
 });
 
+router.get('/users/:id', function (req, res, next) {
+    const id = req.params.id;
+    findUserById(next, id, user => {
+        res.json(user);
+    });
+});
+
+router.put('/users/:id', async function (req, res, next) {
+    const id = req.params.id;
+    const payload = req.body;
+    await putUserRole(next, id, payload);
+    res.send();
+});
+
 router.get('/categories', function (req, res, next) {
     adminListObjects(res, req, Category, 'label');
 });
 
 router.get('/categories/:id', async function (req, res, next) {
     const id = req.params.id;
-    const category = await Category.findById(id);
-    if (category) {
-        res.send(category);
-    } else {
-        res.status(404).send();
-    }
+    findCategoryById(next, id, (category) => {
+        res.json(category);
+    });
 });
 
 router.put('/categories/:id', async function (req, res, next) {
     const id = req.params.id;
     const payload = req.body;
-    const category = await Category.findById(id);
-    if (category) {
-        if (payload.label && payload.description && payload.order) {
-            category.label = payload.label;
-            category.description = payload.description;
-            category.order = payload.order;
-            await category.save();
-            res.send();
-        } else {
-            res.status(400).send();
-        }
-    } else {
-        res.status(404).send();
-    }
+    updateCategory(next, id, payload)
+        .then(() => res.json());
 });
 
 router.post('/categories', async function (req, res, next) {
     const payload = req.body;
-    if (payload && payload.label && payload.description) {
-        const categoryCount = await Category.countDocuments();
-        const category = new Category({
-            label: payload.label,
-            description: payload.description,
-            order: (categoryCount * 5)
-        });
-        await category.save();
-        res.send();
-    } else {
-        res.status(400).send();
-    }
+    await createCategory(next, payload);
+    res.json();
 });
 
 router.delete('/categories/:id', async function (req, res, next) {
@@ -154,113 +152,31 @@ router.get('/imports', function (req, res, next) {
     adminListObjects(res, req, Import, '-creationDate');
 });
 
-router.get('/imports/:id', function (req, res, next) {
+router.get('/imports/:id', async function (req, res, next) {
     const id = req.params.id;
-    Import.findById(id).exec((error, importEntity) => {
-        if (error) {
-            res.status(400).send(error);
-        }
-
-        if (importEntity) {
-            res.json(importEntity);
-        } else {
-            res.status(404).send();
-        }
+    findImportById(next, id, (importEntity) => {
+        res.json(importEntity);
     });
 });
 
 router.delete('/imports/:id', async function (req, res, next) {
     const id = req.params.id;
-    const importEntity = await Import.findById(id);
-    if (!importEntity) {
-        res.status(404).send();
-    } else {
-        await deleteMusicByImportId(id);
-        importEntity.delete(error => {
-            if (error) {
-                res.status(400).send();
-            } else {
-                res.send();
-            }
-        });
-    }
+    await deleteImport(next, id);
+    res.send();
 });
 
 router.post('/imports/:id', async function (req, res, next) {
     const id = req.params.id;
     const user = req.userContext;
-    const importEntity = await Import.findById(id);
-    if (importEntity) {
-        await deleteMusicByImportId(id);
-        const start = new Date().getTime();
-        const importId = importEntity._id.toString();
-        const metadata = JSON.parse(importEntity.metadata);
-        const folder = metadata.folder;
-        const files = metadata.files;
-        let importedMusicCount = 0;
-        for (let index in files) {
-            const file = files[index];
-
-            const trimArtist = file.artist.trim();
-            const trimTitle = file.title.trim();
-            const musicDocument = {
-                artist: trimArtist,
-                title: trimTitle,
-                file: folder + '/' + file.file,
-                artistSanitized: sanitizeMusicElement(trimArtist),
-                titleSanitized: sanitizeMusicElement(trimTitle),
-                randomInt: getMusicRandomInt(),
-                importObjectId: importId
-            };
-
-            const musicEntity = new Music(musicDocument);
-            musicEntity.save();
-            importedMusicCount++;
-        }
-
-        importEntity.imported = true;
-        importEntity.lastImported = new Date();
-        importEntity.lastImportedBy = JSON.stringify({
-            id: user._id,
-            nickname: user.nickname
-        });
-        await importEntity.save();
-
-        const duration = new Date().getTime() - start;
-        res.json({
-            duration: duration,
-            importedMusicCount: importedMusicCount
-        })
-    } else {
-        res.status(404).send();
-    }
+    const report = await doImport(next, user, id);
+    res.json(report);
 });
 
 router.post('/imports', async function (req, res, next) {
     const payload = req.body;
-    const validPayload = validateImportMetadataFormat(payload.metadata);
-    if (validPayload) {
-        const user = req.userContext;
-
-        const importEntity = new Import({
-            metadata: JSON.stringify(payload.metadata),
-            imported: false,
-            createdBy: JSON.stringify({
-                id: user._id,
-                nickname: user.nickname
-            }),
-            creationDate: new Date()
-        });
-        importEntity.save((errors) => {
-            if (errors) {
-                res.status(400).send(errors);
-            } else {
-                res.send();
-            }
-        });
-        return;
-    }
-    res.status(400).send({message: validPayload});
+    const user = req.userContext;
+    await createImport(next, user, payload);
+    res.send();
 });
 
 router.get('/serverconfig', function (req, res, next) {

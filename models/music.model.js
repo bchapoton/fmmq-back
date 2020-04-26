@@ -26,11 +26,25 @@ const MusicSchema = new mongoose.Schema({
         required: true,
         index: true
     },
+    categoryId: {
+        type: String,
+    },
+    ownerId: {
+        type: String,
+        required: true
+    },
+    ownerNickname: {
+        type: String,
+        required: true
+    },
     importObjectId: {
         type: String,
         index: true
     }
 });
+
+MusicSchema.index({randomInt: 1, categoryId: 1});
+MusicSchema.index({ownerId: 1, artist: 1});
 
 const Music = mongoose.model('Music', MusicSchema);
 
