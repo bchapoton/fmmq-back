@@ -34,6 +34,7 @@ async function updateCategory(errorHandler, id, payload) {
         category.label = payload.label;
         category.description = payload.description;
         category.order = payload.order;
+        category.allMusicsOnServer = payload.allMusicsOnServer;
         category.save();
     } else {
         errorHandler(new BadRequestException("Missing information in payload"));
@@ -46,7 +47,8 @@ async function createCategory(errorHandler, payload) {
         const category = new Category({
             label: payload.label,
             description: payload.description,
-            order: (categoryCount * 5)
+            order: (categoryCount * 5),
+            allMusicsOnServer: payload.allMusicsOnServer
         });
         await category.save();
     } else {

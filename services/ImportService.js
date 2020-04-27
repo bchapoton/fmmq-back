@@ -23,6 +23,7 @@ async function doImport(errorHandler, user, id, contributorUser = null) {
         const start = new Date().getTime();
         const importId = importEntity._id.toString();
         const metadata = JSON.parse(importEntity.metadata);
+        const errors = [];
         const folder = metadata.folder;
         const files = metadata.files;
         let importedMusicCount = 0;
@@ -35,13 +36,18 @@ async function doImport(errorHandler, user, id, contributorUser = null) {
                 artist: trimArtist,
                 title: trimTitle,
                 file: folder + '/' + file.file,
-                artistSanitized: sanitizeMusicElement(trimArtist),
+                artistSanitized: splitArtistWithFeatArray(sanitizeMusicElement(trimArtist)),
                 titleSanitized: sanitizeMusicElement(trimTitle),
                 randomInt: getMusicRandomInt(),
                 importObjectId: importId,
                 ownerId: userField.id,
                 ownerNickname: userField.nickname,
             };
+
+            if(!(musicDocument.artistSanitized && musicDocument.titleSanitized)) {
+                errors.push(musicDocument);
+                continue;
+            }
 
             const musicEntity = new Music(musicDocument);
             musicEntity.save();
@@ -56,11 +62,27 @@ async function doImport(errorHandler, user, id, contributorUser = null) {
         const duration = new Date().getTime() - start;
         return {
             duration: duration,
-            importedMusicCount: importedMusicCount
+            importedMusicCount: importedMusicCount,
+            errorsCount: errors.length,
+            documentsInError: errors
         };
     } else {
         errorHandler(new ObjectNotFoundException());
     }
+}
+
+/**
+ * Handle artist with ID3Tag array separated by ;
+ * If we detect this case, split on the ; and take only the first array value
+ *
+ * @param value
+ * @return {*|string}
+ */
+function splitArtistWithFeatArray(value) {
+    if(value.indexOf(';') > -1) {
+        return value.split(';')[0];
+    }
+    return value;
 }
 
 function findImportById(errorHandler, id, success) {

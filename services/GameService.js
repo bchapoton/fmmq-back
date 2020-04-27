@@ -127,6 +127,9 @@ function cleanForbiddenWords(str, words) {
     if(cleaned.indexOf('(') && cleaned.indexOf(')')) {
         cleaned = cleaned.substring(0, cleaned.indexOf('(')) + cleaned.substring(cleaned.indexOf(')') + 1);
     }
+    if(cleaned.indexOf('[') && cleaned.indexOf(']')) {
+        cleaned = cleaned.substring(0, cleaned.indexOf('[')) + cleaned.substring(cleaned.indexOf(']') + 1);
+    }
     return cleaned.trim();
 }
 
