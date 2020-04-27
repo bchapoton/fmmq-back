@@ -35,7 +35,6 @@ const checkTokenValidity = (token, req, res) => {
                 tokenDate: currentTime,
                 expire: getTWTExpireInMilliseconds(currentTime)
             });
-            res.set('x-token', generateJWTFromPayload(refreshedToken));
             req.userContext = decoded;
             return true;
         }

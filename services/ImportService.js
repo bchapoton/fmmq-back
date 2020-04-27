@@ -9,12 +9,14 @@ const {deleteMusicByImportId} = require("../services/MusicService");
 const {getMusicRandomInt} = require("../services/MusicService");
 const {sanitizeMusicElement} = require("../services/GameService");
 const {Import} = require("../models/import.model");
+const cacheService = require('./CacheService');
 
 async function doImport(errorHandler, user, id, contributorUser = null) {
     const importEntity = await findImportByIdSync(errorHandler, id);
     if(!checkContributorAuthorized(errorHandler, contributorUser, importEntity)) {
         return;
     }
+    cacheService.clearCategoryMusicsCount();
     const userField = createImportByFromUser(errorHandler, user);
     if (importEntity) {
         await deleteMusicByImportId(id);

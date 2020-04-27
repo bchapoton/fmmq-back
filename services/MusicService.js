@@ -1,4 +1,6 @@
 const {Music} = require('../models/music.model');
+const categoryService = require('./CategoryService');
+const {ServerErrorException} = require("../exceptions/ServerErrorException");
 
 const musicPickStep = 3;
 
@@ -67,6 +69,29 @@ async function deleteMusicByImportId(importEntityId) {
     }
 }
 
+function countMusicsByCategoryId(errorHandlers, categoryId, success) {
+    categoryService.findCategoryById(errorHandlers, categoryId, category => {
+        if(category.allMusicsOnServer) {
+            Music.countDocuments({}, (error, count) => {
+                if (error) {
+                    errorHandlers(new ServerErrorException(error.toString()));
+                } else {
+                    success(count);
+                }
+            });
+        } else {
+            Music.countDocuments({categoryId: categoryId},  (error, count) => {
+                if (error) {
+                    errorHandlers(new ServerErrorException(error.toString()));
+                } else {
+                    success(count);
+                }
+            });
+        }
+    });
+}
+
 exports.pickMusics = pickMusics;
 exports.getMusicRandomInt = getMusicRandomInt;
 exports.deleteMusicByImportId = deleteMusicByImportId;
+exports.countMusicsByCategoryId = countMusicsByCategoryId;

@@ -13,6 +13,10 @@ const CategorySchema = new mongoose.Schema({
     order: {
         type: Number,
         index: true
+    },
+    allMusicsOnServer: {
+        type: Boolean,
+        default: true
     }
 });
 

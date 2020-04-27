@@ -58,7 +58,7 @@ async function createRoom(categoryId, categoryLabel) {
     const {Room} = require("./bean/Room"); // avoid cyclic dependencies between Room and GameService leading to undefined required functions
     const musics = await pickMusics();
     const game = new Room(categoryId, categoryLabel, musics);
-    cacheService.set(categoryId, game);
+    cacheService.setRoom(categoryId, game);
     return game;
 }
 

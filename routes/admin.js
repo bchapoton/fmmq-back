@@ -15,16 +15,14 @@ const {findCategoryById} = require("../services/CategoryService");
 const {deleteImport} = require("../services/ImportService");
 const {findImportById} = require("../services/ImportService");
 const {doImport} = require("../services/ImportService");
-const {deleteMusicByImportId} = require("../services/MusicService");
-const {getMusicRandomInt} = require("../services/MusicService");
-const {sanitizeMusicElement} = require("../services/GameService");
-const {validateImportMetadataFormat} = require("../services/ValidationService");
 const {Import} = require("../models/import.model");
 const {delMusicDuplicates} = require("../services/AdministrationService");
 const {getMusicDuplicates} = require("../services/AdministrationService");
 const {reSanitizeDB} = require("../services/AdministrationService");
 const {isDebug} = require("../services/SystemService");
-var router = express.Router();
+const cacheService = require('../services/CacheService');
+const {ObjectNotFoundException} = require("../exceptions/ObjectNotFoundException");
+const router = express.Router();
 
 router.get('/count/:type', function (req, res, next) {
     const type = req.params.type;
@@ -195,6 +193,38 @@ router.get('/serverconfig', function (req, res, next) {
     });
 });
 
+router.get('/cache/objects', function (req, res, next) {
+    const roomIds = cacheService.getRoomIds();
+    const rooms = [];
+    for(let index in roomIds) {
+        const roomId = roomIds[index];
+        const room = cacheService.findRoom(roomId);
+        rooms.push({
+            categoryId: room.getCategoryId(),
+            categoryLabel: room.categoryLabel,
+            players: room.countPlayers(),
+            currentMusicIndex: room.getCurrentMusicIndexFromZero(),
+            musicSchemeLength: room.getMusicSchemeLength(),
+        })
+    }
+
+    res.json({
+        rooms,
+        categoryMusicsCounters: cacheService.getCategoryMusicsCounters()
+    })
+});
+
+
+router.get('/cache/objects/:roomId', function (req, res, next) {
+    const roomId = req.params.roomId;
+    const room = cacheService.findRoom(roomId);
+    if(room) {
+        res.json(room.toJSON());
+    } else {
+        next(new ObjectNotFoundException("Can't find the room"));
+    }
+});
+
 const adminListObjects = (res, req, model, sort) => {
     const pager = getPagerFromRequest(req);
     const query = model.find().sort(sort).skip(pager.start).limit(pager.limit);
@@ -208,7 +238,7 @@ const adminListObjects = (res, req, model, sort) => {
 };
 
 const adminCountObjects = (res, model) => {
-    const query = model.countDocuments({}, (error, count) => {
+    model.countDocuments({}, (error, count) => {
         if (error) {
             res.status(400).json({message: error});
         } else {

@@ -330,7 +330,7 @@ class Room {
             });
 
             // clean the game in cache
-            cacheService.delete(this.getCategoryId());
+            cacheService.deleteRoom(this.getCategoryId());
 
             const game = new Game({
                 categoryId: this.getCategoryId(),
@@ -363,6 +363,18 @@ class Room {
 
     getCurrentMusicFromScheme() {
         return this.musicScheme[this.currentMusicIndex];
+    }
+
+    toJSON() {
+        return {
+            categoryId: this.categoryId,
+            categoryLabel: this.categoryLabel,
+            musicScheme: this.musicScheme,
+            currentMusicIndex: this.currentMusicIndex,
+            players: this.players,
+            currentMusicTrophy: this.currentMusicTrophy,
+            onAir: this.onAir,
+        }
     }
 }
 
