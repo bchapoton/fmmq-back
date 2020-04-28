@@ -1,4 +1,5 @@
 const serverConfig = require('../config/server');
+const {logError} = require("../logger/Logger");
 const {getMusicRandomInt} = require("./MusicService");
 const {logInfo} = require("../logger/Logger");
 const {sanitizeMusicElement} = require("./GameService");
@@ -9,12 +10,25 @@ const {ServerConfig} = require('../models/serverConfig.model');
 const initServerData = async () => {
     const serverConfigEntity = await ServerConfig.findOne();
     if(!serverConfigEntity) {
-        logInfo('initialize server in version ' + serverConfig.version);
+        logInfo('FMMQInit initialize server in version ' + serverConfig.version);
         initServerConfig();
         initCategory();
-        initMusic();
     } else {
-        logInfo('FMMQ server v' + serverConfigEntity.version);
+        const serverConfigEntityVersion = serverConfigEntity.version;
+        if(serverConfigEntityVersion === serverConfig.version) {
+            logInfo('FMMQInit server v' + serverConfigEntityVersion);
+        } else if (serverConfigEntityVersion < serverConfig.version) {
+            logInfo(`FMMQInit server db v${serverConfigEntityVersion} vs code v${serverConfig.version}`);
+            logInfo(`FMMQInit start migration to v${serverConfig.version}`);
+            // for now no need migration to nothing except updating version in DB
+            serverConfigEntity.version = serverConfig.version;
+            serverConfigEntity.updateDate = new Date();
+            await serverConfigEntity.save();
+            logInfo(`FMMQInit migration to v${serverConfig.version} is over`);
+        } else {
+            logError(`FMMQInit server db v${serverConfigEntityVersion} is higher than code v${serverConfig.version}`);
+            logError(`FMMQInit can't backward migration start in v${serverConfigEntityVersion}`);
+        }
     }
 };
 
@@ -29,47 +43,11 @@ const initServerConfig = () => {
 const initCategory = () => {
     const category = new Category({
         label: 'Tout',
-        description: 'Toutes les musiques du serveur dans une salle'
+        description: 'Toutes les musiques du serveur dans une salle',
+        order: 1,
+        allMusicsOnServer: true
     });
     category.save();
-};
-
-const initMusic = () => {
-    const musics = [
-        {
-            artist: 'R. Kelly',
-            title: 'If I Could Turn Back The Hands Of Time',
-            file: 'music/0004037.mp3'
-        },
-        {
-            artist: 'Eiffel 65',
-            title: 'Move Your Body',
-            file: 'music/0004060.mp3'
-        },
-        {
-            artist: 'Robbie Williams',
-            title: "She's The One",
-            file: 'music/0004070.mp3'
-        },
-        {
-            artist: 'Christina Aguilera',
-            title: 'What A Girl Wants',
-            file: 'music/0004074.mp3'
-        }
-    ];
-
-    musics.forEach(music => {
-        const musicEntity = new Music(
-            Object.assign({},
-                music,
-                {
-                    artistSanitized: sanitizeMusicElement(music.artist),
-                    titleSanitized: sanitizeMusicElement(music.title),
-                    randomInt: getMusicRandomInt()
-                })
-        );
-        musicEntity.save();
-    });
 };
 
 exports.initServerData = initServerData;

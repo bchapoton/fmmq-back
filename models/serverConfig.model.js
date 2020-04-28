@@ -8,6 +8,10 @@ const ServerConfigSchema = new mongoose.Schema({
     creationDate: {
         type: Date,
         required: true
+    },
+    updateDate: {
+        type: Date,
+        default: null
     }
 });
 
