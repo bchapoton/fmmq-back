@@ -46,6 +46,10 @@ const emitRoundStarts = (categoryId, payload) => {
     socket.of(categoryId).emit('ROUND_STARTS', payload);
 };
 
+const emitNewGameStarts = (categoryId, playerNickname) => {
+    socket.of(categoryId).emit('NEW_GAME_STARTS', {playerNickname: playerNickname});
+};
+
 const emitRoundEnds = (categoryId, currentMusicScheme, nextMusicScheme) => {
     const payload = {
         nextFile: nextMusicScheme.file
@@ -95,3 +99,4 @@ exports.emitAlreadyFoundEverything = emitAlreadyFoundEverything;
 exports.emitGameEnds = emitGameEnds;
 exports.emitMessageOnChat = emitMessageOnChat;
 exports.emitOperatorMessage = emitOperatorMessage;
+exports.emitNewGameStarts = emitNewGameStarts;

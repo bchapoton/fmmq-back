@@ -28,7 +28,7 @@ const enterRoom = async (categoryId, player) => {
     } else {
         game = await createRoom(categoryId, category.label);
         playerObject = joinRoom(game, player);
-        game.start();
+        game.start(player.nickname);
     }
 
     // create the socket if don't exists

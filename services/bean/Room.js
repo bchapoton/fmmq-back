@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const cacheService = require('../CacheService');
+const {emitNewGameStarts} = require("../EventEmitterService");
 const {sanitizeGuess} = require("../GameService");
 const {emitOperatorMessage} = require("../EventEmitterService");
 const {logDebug} = require("../../logger/Logger");
@@ -266,8 +267,15 @@ class Room {
         }
     }
 
-    start() {
-        this.endCurrentMusic(10000);
+    /**
+     * Start the game for this room
+     * @param nickname
+     */
+    start(nickname) {
+        if(this.currentMusicIndex === -1) {
+            emitNewGameStarts(this.getCategoryId(), nickname);
+            this.endCurrentMusic(10000);
+        }
     }
 
     startCurrentMusic() {
