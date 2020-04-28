@@ -42,11 +42,8 @@ const emitOnGuessed = (categoryId, player, points, found, alreadyFound, trophy, 
     socket.of(categoryId).emit('GUESSED', payload);
 };
 
-const emitRoundStarts = (categoryId, currentMusicScheme, currentMusicIndexFromZero) => {
-    socket.of(categoryId).emit('ROUND_STARTS', {
-        fileUrl: currentMusicScheme.file,
-        currentMusicIndexDisplayed: currentMusicIndexFromZero
-    });
+const emitRoundStarts = (categoryId, payload) => {
+    socket.of(categoryId).emit('ROUND_STARTS', payload);
 };
 
 const emitRoundEnds = (categoryId, currentMusicScheme, nextMusicScheme) => {

@@ -34,6 +34,16 @@ const enterRoom = async (categoryId, player) => {
     // create the socket if don't exists
     createSocketRoom(getSocket(), categoryId);
 
+    let currentMusicInProgress = null;
+    if(game.currentMusicStartTimestamp !== null) {
+        // if this is set a music is in progress send the data for start playing the music in the middle of it
+        const currentMusicPosition = Math.round(new Date().getTime() - game.currentMusicStartTimestamp);
+        currentMusicInProgress = {
+            positionMilliseconds: currentMusicPosition,
+            musicInfo: game.buildMusicObjectForClientPlayer()
+        };
+    }
+
     return {
         category: {
             label: category.label
@@ -44,7 +54,8 @@ const enterRoom = async (categoryId, player) => {
         leaderBoard: game.getLeaderBoard(),
         socketNamespace: categoryId,
         playerToken: playerObject.playerToken,
-        playerId: player.id
+        playerId: player.id,
+        currentMusicInProgress: currentMusicInProgress
     }
 };
 

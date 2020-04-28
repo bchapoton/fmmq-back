@@ -28,6 +28,7 @@ class Room {
         this.players = [];
         this.currentMusicTrophy = [];
         this.onAir = false; // if true a music to guess is in progress
+        this.currentMusicStartTimestamp = null; // store when the start current music event was sent, use to calculate when player come in the middle of a music
         this.timeoutRef = null;
     }
 
@@ -281,15 +282,29 @@ class Room {
             this.players[playerIndex].currentMusicValues = playerCurrentMusicInitialState(nexMusicScheme);
         }
 
-        emitRoundStarts(this.getCategoryId(), this.getCurrentMusicFromScheme(), this.getCurrentMusicIndexFromZero());
+        emitRoundStarts(this.getCategoryId(), this.buildMusicObjectForClientPlayer());
+        this.currentMusicStartTimestamp = new Date().getTime();
         const _self = this;
         this.timeoutRef = setTimeout(() => {
             _self.endCurrentMusic();
-        }, 30000);
+        }, 30500); // add 500 ms to the timeout for the loading time
+    }
+
+    buildMusicObjectForClientPlayer() {
+        const currentMusicScheme = this.getCurrentMusicFromScheme();
+        if (currentMusicScheme) {
+            return {
+                fileUrl: currentMusicScheme.file,
+                currentMusicIndexDisplayed: this.getCurrentMusicIndexFromZero()
+            }
+        } else {
+            return {};
+        }
     }
 
     async endCurrentMusic(pauseTimerMilliseconds = 5000) {
         this.onAir = false;
+        this.currentMusicStartTimestamp = null;
         this.currentMusicTrophy = [];
         let previousMusicScheme;
         let previousMusicIndex = this.currentMusicIndex;
@@ -362,7 +377,9 @@ class Room {
     }
 
     getCurrentMusicFromScheme() {
-        return this.musicScheme[this.currentMusicIndex];
+        if (this.currentMusicIndex > -1)
+            return this.musicScheme[this.currentMusicIndex];
+        else return null;
     }
 
     toJSON() {
