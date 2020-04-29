@@ -67,6 +67,14 @@ class CacheService {
     setCategoryMusicsCount(categoryId, count) {
         this.get(CACHE_KEY_CATEGORY_MUSICS_COUNTER)[categoryId] = count;
     }
+
+    findChat(categoryId) {
+        return this.get(categoryId + '-chat');
+    }
+
+    setChat(categoryId, chat) {
+        this.set(categoryId + '-chat', chat);
+    }
 }
 
 module.exports = new CacheService(); // singleton handle by Node

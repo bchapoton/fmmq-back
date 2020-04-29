@@ -10,6 +10,7 @@ const {isDebug} = require("./services/SystemService");
 const errorHandler = require('./middleware/ErrorHandler');
 
 const usersRouter = require('./routes/users');
+const chatRouter = require('./routes/chat');
 const adminRouter = require('./routes/admin');
 const contributorRouter = require('./routes/contributor');
 const gamesRouter = require('./routes/games');
@@ -39,6 +40,7 @@ app.use('/admin', authMiddleware, adminRoleMiddleWare, adminRouter);
 app.use('/contributor', authMiddleware, contributorRoleMiddleWare, contributorRouter);
 app.use('/rooms', authMiddleware, roomsRouter);
 app.use('/games', authMiddleware, gamesRouter);
+app.use('/chat', authMiddleware, chatRouter);
 app.use('/auth', authenticationRouter);
 
 // error handler
