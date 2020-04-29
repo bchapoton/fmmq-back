@@ -31,12 +31,27 @@ router.get('/count/:type', function (req, res, next) {
 router.get('/musics', function (req, res, next) {
     const pager = getPagerFromRequest(req);
     const user = req.userContext;
-    const query = Music.find({ownerId: user._id}).sort('artist').skip(pager.start).limit(pager.limit);
-    query.exec((error, values) => {
-        if (error) {
-            res.status(400).json({message: error});
+    // this is the import owner who drive the right, if an admin relaunch the import, we need the contributor still see his music
+    // keep the sort, there is an index on ownerId and creationDate
+    const importQuery = Import.find({ownerId: user._id}).sort('-creationDate');
+    importQuery.exec((error, imports) => {
+        const importIds = imports.map(importEntity => importEntity._id.toString());
+        if (importIds.length === 0) {
+            res.json([]);
         } else {
-            res.json(values);
+            const query = Music.find()
+                .where('importObjectId')
+                .in(importIds)
+                .sort('artist')
+                .skip(pager.start)
+                .limit(pager.limit);
+            query.exec((error, values) => {
+                if (error) {
+                    res.status(400).json({message: error});
+                } else {
+                    res.json(values);
+                }
+            });
         }
     });
 });
@@ -58,7 +73,7 @@ router.get('/imports/:id', async function (req, res, next) {
     const id = req.params.id;
     const user = getContributorUserContext(next, req);
     findImportById(next, id, (importEntity) => {
-        if(importEntity.ownerId === user._id) {
+        if (importEntity.ownerId === user._id) {
             res.json(importEntity);
         } else {
             next(new UnauthorizedException('Unauthorized'));
@@ -97,7 +112,7 @@ const contributorCountObjects = (user, res, model) => {
 };
 
 function getContributorUserContext(errorHandler, req) {
-    if(req.userContext) {
+    if (req.userContext) {
         return req.userContext;
     }
     errorHandler(new UnauthorizedException());

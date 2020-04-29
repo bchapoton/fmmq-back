@@ -13,7 +13,7 @@ const cacheService = require('./CacheService');
 
 async function doImport(errorHandler, user, id, contributorUser = null) {
     const importEntity = await findImportByIdSync(errorHandler, id);
-    if(!checkContributorAuthorized(errorHandler, contributorUser, importEntity)) {
+    if (!checkContributorAuthorized(errorHandler, contributorUser, importEntity)) {
         return;
     }
     cacheService.clearCategoryMusicsCount();
@@ -36,15 +36,15 @@ async function doImport(errorHandler, user, id, contributorUser = null) {
                 artist: trimArtist,
                 title: trimTitle,
                 file: folder + '/' + file.file,
-                artistSanitized: splitArtistWithFeatArray(sanitizeMusicElement(trimArtist)),
-                titleSanitized: sanitizeMusicElement(trimTitle),
+                artistSanitized: sanitizeArtist(trimArtist),
+                titleSanitized: sanitizeTitle(trimTitle),
                 randomInt: getMusicRandomInt(),
                 importObjectId: importId,
                 ownerId: userField.id,
                 ownerNickname: userField.nickname,
             };
 
-            if(!(musicDocument.artistSanitized && musicDocument.titleSanitized)) {
+            if (!(musicDocument.artistSanitized && musicDocument.titleSanitized)) {
                 errors.push(musicDocument);
                 continue;
             }
@@ -71,6 +71,18 @@ async function doImport(errorHandler, user, id, contributorUser = null) {
     }
 }
 
+function sanitizeArtist(artist) {
+    if (!artist)
+        return artist;
+    return splitArtistWithFeatArray(sanitizeMusicElement(artist.trim()))
+}
+
+function sanitizeTitle(title) {
+    if (!title)
+        return title;
+    return sanitizeMusicElement(title.trim())
+}
+
 /**
  * Handle artist with ID3Tag array separated by ;
  * If we detect this case, split on the ; and take only the first array value
@@ -79,7 +91,7 @@ async function doImport(errorHandler, user, id, contributorUser = null) {
  * @return {*|string}
  */
 function splitArtistWithFeatArray(value) {
-    if(value.indexOf(';') > -1) {
+    if (value.indexOf(';') > -1) {
         return value.split(';')[0];
     }
     return value;
@@ -146,7 +158,7 @@ async function deleteImport(errorHandler, id, contributorUser = null) {
     if (!importEntity) {
         errorHandler(new ObjectNotFoundException("Can't find import with id " + id))
     } else {
-        if(checkContributorAuthorized(errorHandler, contributorUser, importEntity)) {
+        if (checkContributorAuthorized(errorHandler, contributorUser, importEntity)) {
             await deleteMusicByImportId(id);
             try {
                 importEntity.delete();
@@ -158,11 +170,11 @@ async function deleteImport(errorHandler, id, contributorUser = null) {
 }
 
 function checkContributorAuthorized(errorHandler, contributorUser, importEntity) {
-    if(!contributorUser) {
+    if (!contributorUser) {
         return true;
     }
 
-    if(importEntity.ownerId === contributorUser._id) {
+    if (importEntity.ownerId === contributorUser._id) {
         return true;
     }
     errorHandler(new UnauthorizedException());
@@ -174,3 +186,5 @@ exports.createImport = createImport;
 exports.deleteImport = deleteImport;
 exports.findImportById = findImportById;
 exports.findImportByIdSync = findImportByIdSync;
+exports.sanitizeArtist = sanitizeArtist;
+exports.sanitizeTitle = sanitizeTitle;

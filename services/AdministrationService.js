@@ -1,5 +1,6 @@
+const {sanitizeArtist} = require("./ImportService");
+const {sanitizeTitle} = require("./ImportService");
 const {getMusicRandomInt} = require("./MusicService");
-const {sanitizeMusicElement} = require("../services/GameService");
 const {Music} = require("../models/music.model");
 
 /**
@@ -14,8 +15,8 @@ exports.reSanitizeDB = async function () {
     for (let index in musics) {
         const music = musics[index];
         try {
-            music.artistSanitized = sanitizeMusicElement(music.artist);
-            music.titleSanitized = sanitizeMusicElement(music.title);
+            music.artistSanitized = sanitizeArtist(music.artist);
+            music.titleSanitized = sanitizeTitle(music.title);
             music.randomInt = getMusicRandomInt();
             music.save().catch(e => {
                 errorsCount++;
