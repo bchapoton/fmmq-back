@@ -2,3 +2,4 @@ node_modules
 yarn*.log
 bin/temp
 .git
+dev-env

@@ -1,0 +1,10 @@
+services:
+  fmmq-mongodb:
+    image: mongo:4.2.5
+    ports:
+      - '27017:27017'
+    volumes:
+      - fmmq-db-data:/data/db
+
+volumes:
+  fmmq-db-data:
