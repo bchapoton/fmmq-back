@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 const fs = require('fs');
 
 if(!fs.existsSync('./logs')) {
@@ -8,8 +7,7 @@ if(!fs.existsSync('./logs')) {
 /**
  * Module dependencies.
  */
-
-const {logError, logInfo, logDebug} = require("../logger/Logger");
+const {logError, logInfo, logDebug} = require("../src/logger/Logger");
 const {isDebug} = require("../services/SystemService");
 const app = require('../app');
 const http = require('http');

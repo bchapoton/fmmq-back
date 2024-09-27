@@ -1,10 +1,14 @@
 services:
-  fmmq-mongodb:
-    image: mongo:4.2.5
+  fmmq-mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
     ports:
       - '27017:27017'
     volumes:
-      - fmmq-db-data:/data/db
+      - fmmq-mongo-db-data:/data/db
 
 volumes:
-  fmmq-db-data:
+  fmmq-mongo-db-data:
